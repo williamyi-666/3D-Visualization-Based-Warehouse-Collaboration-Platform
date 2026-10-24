@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>仓库作业 · 3D可视化仓储协同平台</title>
+<meta name="theme-color" content="#101a2d"><link rel="manifest" href="./mobile.webmanifest"><link rel="apple-touch-icon" href="./mobile-icon-192.png">
+<script src="./interface-entry.js"></script>
+<script src="../../../runtime.js"></script><script src="./request-bridge.js"></script>
+<script src="./random-id.js"></script>
+<script src="./counter-write.js"></script>
+<script src="./business-fields.js"></script>
+<script src="./vendor/jsQR.js"></script>
+<link rel="stylesheet" href="./mobile.css">
+<link rel="stylesheet" href="./stocktake.css">
+<link rel="stylesheet" href="./warehouse-work.css" data-warehouse-work>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/jsm/"}}</script>
+</head>
+<body>
+<header><div><h1>仓库作业</h1><p id="identity">正在检查登录…</p></div><a id="desktopViewSwitch" href="./index.html?ui=desktop">切换电脑版</a></header>
+<main>
+<p id="message" role="status"></p>
+<section id="loginPanel" class="card hidden" aria-label="登录仓库作业">
+<h2>登录仓库作业</h2><p class="hint">使用管理员分配的仓库账号。</p>
+<form id="loginForm"><label for="loginUser">账号</label><input id="loginUser" autocomplete="username" required>
+<label for="loginPassword">密码</label><input id="loginPassword" type="password" autocomplete="current-password" required>
+<button id="loginSubmit" type="submit">登录</button></form><p id="loginError" role="alert"></p>
+</section>
+<div id="workspace" class="hidden">
+<div id="offlineStatus" class="offline-status hidden" role="status"><p id="offlineStatusText"></p><button id="retryOffline">重新连接</button></div>
+<section class="card room-picker"><label for="room">库区</label><select id="room" aria-label="库区"></select></section>
+<p id="liveStatus" class="hint" role="status"></p>
+<form id="searchForm" class="card"><label for="query">查找货品或格位</label><div class="search"><input id="query" type="search" placeholder="名称 / SKU / 格位码" autocomplete="off"><button>查询</button></div></form>
+<section id="results" aria-label="查询结果"></section>
+<section id="warehouseView" aria-label="仓库视图">
+<div id="mobileScene" aria-label="三维仓库"><p id="sceneMessage" role="status">正在加载三维场景…</p></div>
+<div class="scene-tools"><span class="hint">单指旋转 · 双指缩放 / 平移</span><button id="modelScene" aria-pressed="false">写实模型</button><button id="resetScene">复位视角</button></div>
+</section>
+<section id="workView" class="card hidden" aria-label="办理作业"><h2>办理库存作业</h2>
+<div class="work-toolbar"><button id="openingStock" disabled>首次建账</button><button id="workTasks" disabled>我的待办</button><button id="teamTasks" disabled>团队任务</button><button id="itemCodes" hidden>货品编码整理</button></div>
+<nav id="quickActions" aria-label="直接办理"><button data-mode="in" disabled>入库</button><button data-mode="out" disabled>出库</button><button data-mode="move" disabled>移库</button><button id="quickCount" disabled>盘点</button><button id="quickHistory" disabled>库存流水</button><button id="browseCells" disabled>浏览格位</button></nav>
+<p class="hint">可直接办理业务，也可先查货或浏览格位。</p></section>
+<section id="recordsView" class="card hidden" aria-label="作业记录"><h2>作业记录</h2><p class="hint">选择格位，查看出入库、移库及盘点调账记录。</p><button id="recordLookup">选择格位查看记录</button></section>
+<details class="mobile-install"><summary>手机快捷入口</summary><button id="installMobile" hidden>添加到手机桌面</button><p id="installHint" class="hint"></p></details>
+<section id="detail" class="card hidden" aria-label="格位库存"><h2 id="loc"></h2><div id="items"></div>
+<button id="locateScene">在 3D 中定位</button><button id="closeDetail">收起详情</button>
+<nav id="actions" aria-label="库存操作"><button data-mode="in">入库</button><button data-mode="out">出库</button><button data-mode="move">移库</button><button id="count">盘点</button><button id="cellHistory">库存流水</button></nav>
+<p id="modeHint" class="hint"></p></section>
+<nav id="mainTabs" aria-label="主要功能"><button data-view="warehouse" aria-pressed="true">仓库</button><button data-view="work" aria-pressed="false">作业</button><button data-view="records" aria-pressed="false">记录</button></nav>
+</div>
+</main>
+<dialog id="counter"><div class="dialog-head"><strong>库存操作</strong><button id="closeCounter">返回查货</button></div><iframe title="出入库操作" id="counterFrame"></iframe></dialog>
+<dialog id="cellPicker"><div class="dialog-head"><strong id="pickerTitle">选择格位</strong><button id="closePicker">关闭</button></div><div class="dialog-body"><label for="cellFilter">筛选格位</label><input id="cellFilter" type="search" placeholder="输入货架或格位编号"><div id="cellChoices"></div></div></dialog>
+<dialog id="history"><div class="dialog-head"><strong id="historyTitle">库存流水</strong><button id="closeHistory">关闭</button></div><div class="dialog-body" id="historyRows"></div></dialog>
+<dialog id="confirmModal" class="mobile-confirm hidden" aria-labelledby="mobileConfirmTitle"><h2 id="mobileConfirmTitle">确认操作</h2><p id="mobileConfirmText"></p><div class="actions"><button id="mobileConfirmCancel" autofocus>取消</button><button id="mobileConfirmAccept">确认</button></div></dialog>
+<script type="module" src="./mobile.mjs"></script>
+</body></html>

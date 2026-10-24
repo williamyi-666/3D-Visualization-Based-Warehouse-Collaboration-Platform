@@ -1,0 +1,24 @@
+# 可选独立知识服务。普通本地模式已内置资料管理，不需要启动此容器。
+# Windows：tools/start-knowledge.ps1；Linux：sh tools/start-knowledge.sh
+name: ${SPATIAL_KNOWLEDGE_PROJECT:-spatial-warehouse-knowledge}
+services:
+  knowledge:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.knowledge
+    image: spatial-knowledge:20261021.1
+    restart: unless-stopped
+    ports:
+      - "${SPATIAL_KNOWLEDGE_BIND:-127.0.0.1}:${SPATIAL_KNOWLEDGE_PORT:-38210}:38210"
+    environment:
+      SPATIAL_KNOWLEDGE_KEY: ${SPATIAL_KNOWLEDGE_KEY:?请先运行启动脚本生成密钥}
+      SPATIAL_KNOWLEDGE_ID: ${SPATIAL_KNOWLEDGE_ID:-warehouse}
+    volumes:
+      - knowledge:/knowledge
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:38210/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+volumes:
+  knowledge:

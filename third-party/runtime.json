@@ -1,0 +1,1684 @@
+{
+  "format": 1,
+  "scope": "应用两套npm生产依赖；不包含Node/Linux基础镜像和Open supOS平台",
+  "locks": [
+    {
+      "path": "package-lock.json",
+      "sha256": "2d0d4572ca60ad3e6cadabb764adb2860e027a663820c2817bcc3ce0ef24cdc1"
+    },
+    {
+      "path": "apps/api/package-lock.json",
+      "sha256": "e95bb647f3efe04564ce19f8ffb44d46d6336bc6578bffc471de829161d43d6e"
+    }
+  ],
+  "packages": [
+    {
+      "name": "@babel/runtime",
+      "version": "7.29.7",
+      "license": "MIT",
+      "integrity": "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==",
+      "locations": [
+        "node_modules/@babel/runtime"
+      ],
+      "license_files": [
+        {
+          "path": "npm/@babel__runtime@7.29.7/LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+        }
+      ]
+    },
+    {
+      "name": "@types/node",
+      "version": "26.4.0",
+      "license": "MIT",
+      "integrity": "sha512-faiGnoIrLH/V8cibOMEAZ8pMw6oXqSukl29ra4mN8GdaB2ZewzeaLj+INpV5N+Z1eKWzY+IzaIZH2EIR6YZRNQ==",
+      "locations": [
+        "node_modules/@types/node"
+      ],
+      "license_files": [
+        {
+          "path": "npm/@types__node@26.4.0/LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/readable-stream",
+      "version": "4.0.24",
+      "license": "MIT",
+      "integrity": "sha512-NRvUNC/JFGPJvqdAfEve8oginbM6V08u5NzLWpG8MwA2kTPOLnqk+wpwuPT+mp3aUsxyuT6m2gnrPuHYCruzEg==",
+      "locations": [
+        "node_modules/@types/readable-stream"
+      ],
+      "license_files": [
+        {
+          "path": "npm/@types__readable-stream@4.0.24/LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "@types/ws",
+      "version": "8.18.1",
+      "license": "MIT",
+      "integrity": "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==",
+      "locations": [
+        "node_modules/@types/ws"
+      ],
+      "license_files": [
+        {
+          "path": "npm/@types__ws@8.18.1/LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "abort-controller",
+      "version": "3.0.0",
+      "license": "MIT",
+      "integrity": "sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==",
+      "locations": [
+        "node_modules/abort-controller"
+      ],
+      "license_files": [
+        {
+          "path": "npm/abort-controller@3.0.0/LICENSE",
+          "sha256": "dbbf03317f0101fed5643cd87ca80fb769e358fa4f428445bf2315deeb23a154"
+        }
+      ]
+    },
+    {
+      "name": "accepts",
+      "version": "1.3.8",
+      "license": "MIT",
+      "integrity": "sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==",
+      "locations": [
+        "apps/api/node_modules/accepts"
+      ],
+      "license_files": [
+        {
+          "path": "npm/accepts@1.3.8/LICENSE",
+          "sha256": "71f83c4c0621102a56d9853812777b85751bce7e9726f686f5b056c1f8a4b0e6"
+        }
+      ]
+    },
+    {
+      "name": "array-flatten",
+      "version": "1.1.1",
+      "license": "MIT",
+      "integrity": "sha512-PCVAQswWemu6UdxsDFFX/+gVeYqKAod3D3UVm91jHwynguOwAvYPhx8nNlM++NqRcK6CxxpUafjmhIdKiHibqg==",
+      "locations": [
+        "apps/api/node_modules/array-flatten"
+      ],
+      "license_files": [
+        {
+          "path": "npm/array-flatten@1.1.1/LICENSE",
+          "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+        }
+      ]
+    },
+    {
+      "name": "base64-js",
+      "version": "1.5.1",
+      "license": "MIT",
+      "integrity": "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==",
+      "locations": [
+        "node_modules/base64-js"
+      ],
+      "license_files": [
+        {
+          "path": "npm/base64-js@1.5.1/LICENSE",
+          "sha256": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+        }
+      ]
+    },
+    {
+      "name": "bl",
+      "version": "6.1.6",
+      "license": "MIT",
+      "integrity": "sha512-jLsPgN/YSvPUg9UX0Kd73CXpm2Psg9FxMeCSXnk3WBO3CMT10JMwijubhGfHCnFu6TPn1ei3b975dxv7K2pWVg==",
+      "locations": [
+        "node_modules/bl"
+      ],
+      "license_files": [
+        {
+          "path": "npm/bl@6.1.6/LICENSE.md",
+          "sha256": "9377db95383c8befacf05c6e465d969d756edf178487ca1344fdf3ba147c596f"
+        }
+      ]
+    },
+    {
+      "name": "body-parser",
+      "version": "1.20.8",
+      "license": "MIT",
+      "integrity": "sha512-JNcyFQ64OiijEkPzUBTCe+hyPXUD/3LEldGQ6iF5LR1w00mx9o7xtDWHXBY2iItjdCFGoilOLNQbH943ut7pHA==",
+      "locations": [
+        "apps/api/node_modules/body-parser"
+      ],
+      "license_files": [
+        {
+          "path": "npm/body-parser@1.20.8/LICENSE",
+          "sha256": "23d466b1b134b415b66fa50c6526b4cf3e7b9258554da88d3abb371721e7ce68"
+        }
+      ]
+    },
+    {
+      "name": "broker-factory",
+      "version": "3.1.15",
+      "license": "MIT",
+      "integrity": "sha512-ko+aWvgNuP49meGrdjUu7rC+Y+Wai3cCPxP3xWwHsHfehFjOh5ZQM2yC4gEB2UddeZ/YXhm0K1eG/L6fxym2Og==",
+      "locations": [
+        "node_modules/broker-factory"
+      ],
+      "license_files": [
+        {
+          "path": "npm/broker-factory@3.1.15/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "buffer-from",
+      "version": "1.1.2",
+      "license": "MIT",
+      "integrity": "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==",
+      "locations": [
+        "node_modules/buffer-from"
+      ],
+      "license_files": [
+        {
+          "path": "npm/buffer-from@1.1.2/LICENSE",
+          "sha256": "14275f5c8139d02054c5259d52a88ccbba662a86af18c30f071c8d082dc6004c"
+        }
+      ]
+    },
+    {
+      "name": "buffer",
+      "version": "6.0.3",
+      "license": "MIT",
+      "integrity": "sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==",
+      "locations": [
+        "node_modules/buffer"
+      ],
+      "license_files": [
+        {
+          "path": "npm/buffer@6.0.3/LICENSE",
+          "sha256": "06bafa45fdad2579ba0e43b0c9b2c6290287c99c4203c300254a462b38a307f6"
+        }
+      ]
+    },
+    {
+      "name": "bytes",
+      "version": "3.1.2",
+      "license": "MIT",
+      "integrity": "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==",
+      "locations": [
+        "apps/api/node_modules/bytes"
+      ],
+      "license_files": [
+        {
+          "path": "npm/bytes@3.1.2/LICENSE",
+          "sha256": "e3b44af066615de2ea48d18d852d0762f18c0b2efcea714fa48a6f729d405b85"
+        }
+      ]
+    },
+    {
+      "name": "call-bind-apply-helpers",
+      "version": "1.0.2",
+      "license": "MIT",
+      "integrity": "sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==",
+      "locations": [
+        "apps/api/node_modules/call-bind-apply-helpers"
+      ],
+      "license_files": [
+        {
+          "path": "npm/call-bind-apply-helpers@1.0.2/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "call-bound",
+      "version": "1.0.4",
+      "license": "MIT",
+      "integrity": "sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==",
+      "locations": [
+        "apps/api/node_modules/call-bound"
+      ],
+      "license_files": [
+        {
+          "path": "npm/call-bound@1.0.4/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "commist",
+      "version": "3.2.0",
+      "license": "MIT",
+      "integrity": "sha512-4PIMoPniho+LqXmpS5d3NuGYncG6XWlkBSVGiWycL22dd42OYdUGil2CWuzklaJoNxyxUSpO4MKIBU94viWNAw==",
+      "locations": [
+        "node_modules/commist"
+      ],
+      "license_files": [
+        {
+          "path": "npm/commist@3.2.0/LICENSE",
+          "sha256": "f56197ed3d0b2d65d9c5bd1b9ef4d2f480d30f42834d789fd8c375426c8d7bcc"
+        }
+      ]
+    },
+    {
+      "name": "concat-stream",
+      "version": "2.0.0",
+      "license": "MIT",
+      "integrity": "sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==",
+      "locations": [
+        "node_modules/concat-stream"
+      ],
+      "license_files": [
+        {
+          "path": "npm/concat-stream@2.0.0/LICENSE",
+          "sha256": "96b29c9aaa611a05349b362d48c2ffce0966fe408401a2d1a157be312c035b5f"
+        }
+      ]
+    },
+    {
+      "name": "content-disposition",
+      "version": "0.5.4",
+      "license": "MIT",
+      "integrity": "sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==",
+      "locations": [
+        "apps/api/node_modules/content-disposition"
+      ],
+      "license_files": [
+        {
+          "path": "npm/content-disposition@0.5.4/LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400"
+        }
+      ]
+    },
+    {
+      "name": "content-type",
+      "version": "1.0.5",
+      "license": "MIT",
+      "integrity": "sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==",
+      "locations": [
+        "apps/api/node_modules/content-type"
+      ],
+      "license_files": [
+        {
+          "path": "npm/content-type@1.0.5/LICENSE",
+          "sha256": "257aed98914108e91a337912727b6a802eef218248507f74b76faffaff517a38"
+        }
+      ]
+    },
+    {
+      "name": "cookie-signature",
+      "version": "1.0.7",
+      "license": "MIT",
+      "integrity": "sha512-NXdYc3dLr47pBkpUCHtKSwIOQXLVn8dZEuywboCOJY/osA0wFSLlSawr3KN8qXJEyX66FcONTH8EIlVuK0yyFA==",
+      "locations": [
+        "apps/api/node_modules/cookie-signature"
+      ],
+      "license_files": [
+        {
+          "path": "npm/cookie-signature@1.0.7/Readme.md",
+          "sha256": "1621ed10d0b2f865eb8608e0474a356cf7a9737a384b6593b61b30a9f6e50366"
+        }
+      ]
+    },
+    {
+      "name": "cookie",
+      "version": "0.7.2",
+      "license": "MIT",
+      "integrity": "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==",
+      "locations": [
+        "apps/api/node_modules/cookie"
+      ],
+      "license_files": [
+        {
+          "path": "npm/cookie@0.7.2/LICENSE",
+          "sha256": "c02110eedc16c7114f1a9bdc026c65626ce1d9c7e27fd51a8e0feee8a48a6858"
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "version": "2.6.9",
+      "license": "MIT",
+      "integrity": "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==",
+      "locations": [
+        "apps/api/node_modules/debug"
+      ],
+      "license_files": [
+        {
+          "path": "npm/debug@2.6.9/LICENSE",
+          "sha256": "98c970de440dcfc77471610aec2377c9d9b0db2b3be6d1add524a586e1d7f422"
+        }
+      ]
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+      "locations": [
+        "node_modules/debug"
+      ],
+      "license_files": [
+        {
+          "path": "npm/debug@4.4.3/LICENSE",
+          "sha256": "3a61c6c96caf5c1d9b623fb9b04c822b783dfcb78aa7e49c76a3f643e6ed7f95"
+        }
+      ]
+    },
+    {
+      "name": "depd",
+      "version": "2.0.0",
+      "license": "MIT",
+      "integrity": "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==",
+      "locations": [
+        "apps/api/node_modules/depd"
+      ],
+      "license_files": [
+        {
+          "path": "npm/depd@2.0.0/LICENSE",
+          "sha256": "bd134b41da59e452fb5a1d366b660886f741c87c2bf9428e93764c419fbc40f5"
+        }
+      ]
+    },
+    {
+      "name": "destroy",
+      "version": "1.2.0",
+      "license": "MIT",
+      "integrity": "sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==",
+      "locations": [
+        "apps/api/node_modules/destroy"
+      ],
+      "license_files": [
+        {
+          "path": "npm/destroy@1.2.0/LICENSE",
+          "sha256": "ffe370c8785b0b688d954977ce8dc52e19e5f17962cc5f80009c85eba4925d56"
+        }
+      ]
+    },
+    {
+      "name": "dunder-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==",
+      "locations": [
+        "apps/api/node_modules/dunder-proto"
+      ],
+      "license_files": [
+        {
+          "path": "npm/dunder-proto@1.0.1/LICENSE",
+          "sha256": "2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1"
+        }
+      ]
+    },
+    {
+      "name": "ee-first",
+      "version": "1.1.1",
+      "license": "MIT",
+      "integrity": "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==",
+      "locations": [
+        "apps/api/node_modules/ee-first"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ee-first@1.1.1/LICENSE",
+          "sha256": "965ef284f7f4c176842ec2e87fa13e79feed777d56d7a21a5a3b38f1bb6dc288"
+        }
+      ]
+    },
+    {
+      "name": "encodeurl",
+      "version": "2.0.0",
+      "license": "MIT",
+      "integrity": "sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==",
+      "locations": [
+        "apps/api/node_modules/encodeurl"
+      ],
+      "license_files": [
+        {
+          "path": "npm/encodeurl@2.0.0/LICENSE",
+          "sha256": "7585ea7bba616ccbbe43cb54ecb67956688c3c5641bb84f3099a652a73193afe"
+        }
+      ]
+    },
+    {
+      "name": "es-define-property",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==",
+      "locations": [
+        "apps/api/node_modules/es-define-property"
+      ],
+      "license_files": [
+        {
+          "path": "npm/es-define-property@1.0.1/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "es-errors",
+      "version": "1.3.0",
+      "license": "MIT",
+      "integrity": "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==",
+      "locations": [
+        "apps/api/node_modules/es-errors"
+      ],
+      "license_files": [
+        {
+          "path": "npm/es-errors@1.3.0/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "es-object-atoms",
+      "version": "1.1.2",
+      "license": "MIT",
+      "integrity": "sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==",
+      "locations": [
+        "apps/api/node_modules/es-object-atoms"
+      ],
+      "license_files": [
+        {
+          "path": "npm/es-object-atoms@1.1.2/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "escape-html",
+      "version": "1.0.3",
+      "license": "MIT",
+      "integrity": "sha512-NiSupZ4OeuGwr68lGIeym/ksIZMJodUGOSCZ/FSnTxcrekbvqrgdUxlJOMpijaKZVjAJrWrGs/6Jy8OMuyj9ow==",
+      "locations": [
+        "apps/api/node_modules/escape-html"
+      ],
+      "license_files": [
+        {
+          "path": "npm/escape-html@1.0.3/LICENSE",
+          "sha256": "255aa557a1f55224ce522f311629c0bf20854740a67955cefd798fbd1d3d1ded"
+        }
+      ]
+    },
+    {
+      "name": "etag",
+      "version": "1.8.1",
+      "license": "MIT",
+      "integrity": "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==",
+      "locations": [
+        "apps/api/node_modules/etag"
+      ],
+      "license_files": [
+        {
+          "path": "npm/etag@1.8.1/LICENSE",
+          "sha256": "a7996721249a136fbcfc1c201bcb5f414f38a701d4a24f28abe65e16cfcce813"
+        }
+      ]
+    },
+    {
+      "name": "event-target-shim",
+      "version": "5.0.1",
+      "license": "MIT",
+      "integrity": "sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==",
+      "locations": [
+        "node_modules/event-target-shim"
+      ],
+      "license_files": [
+        {
+          "path": "npm/event-target-shim@5.0.1/LICENSE",
+          "sha256": "97d87142793695cd73243de7258694abe85b3b6060fca7f247b0a2afa8219678"
+        }
+      ]
+    },
+    {
+      "name": "events",
+      "version": "3.3.0",
+      "license": "MIT",
+      "integrity": "sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==",
+      "locations": [
+        "node_modules/events"
+      ],
+      "license_files": [
+        {
+          "path": "npm/events@3.3.0/LICENSE",
+          "sha256": "631987b7616a325a5b97566c232418481ddf7dbb5ecadefb991e791876cc2599"
+        }
+      ]
+    },
+    {
+      "name": "express",
+      "version": "4.22.3",
+      "license": "MIT",
+      "integrity": "sha512-Bdcs4+3qlpVlx2NRn6fgX2Ue2/gGRaPeawebgclM0ERSCqDpA+owF1fdPwjJUTAJWMTuAaxjDf+hzb0/4eKvvw==",
+      "locations": [
+        "apps/api/node_modules/express"
+      ],
+      "license_files": [
+        {
+          "path": "npm/express@4.22.3/LICENSE",
+          "sha256": "95a5762890e5c1c9808921cef095661fc482c5e1f0bba31446ac85595df6237c"
+        }
+      ]
+    },
+    {
+      "name": "fast-unique-numbers",
+      "version": "9.0.27",
+      "license": "MIT",
+      "integrity": "sha512-nDA9ADeINN8SA2u2wCtU+siWFTTDqQR37XvgPIDDmboWQeExz7X0mImxuaN+kJddliIqy2FpVRmnvRZ+j8i1/A==",
+      "locations": [
+        "node_modules/fast-unique-numbers"
+      ],
+      "license_files": [
+        {
+          "path": "npm/fast-unique-numbers@9.0.27/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "finalhandler",
+      "version": "1.3.2",
+      "license": "MIT",
+      "integrity": "sha512-aA4RyPcd3badbdABGDuTXCMTtOneUCAYH/gxoYRTZlIJdF0YPWuGqiAsIrhNnnqdXGswYk6dGujem4w80UJFhg==",
+      "locations": [
+        "apps/api/node_modules/finalhandler"
+      ],
+      "license_files": [
+        {
+          "path": "npm/finalhandler@1.3.2/LICENSE",
+          "sha256": "47dcccf62bf40469d23849b0b1dc8df9fc91bce219b880c638d4dc4596e6b5cf"
+        }
+      ]
+    },
+    {
+      "name": "forwarded",
+      "version": "0.2.0",
+      "license": "MIT",
+      "integrity": "sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==",
+      "locations": [
+        "apps/api/node_modules/forwarded"
+      ],
+      "license_files": [
+        {
+          "path": "npm/forwarded@0.2.0/LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400"
+        }
+      ]
+    },
+    {
+      "name": "fresh",
+      "version": "0.5.2",
+      "license": "MIT",
+      "integrity": "sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==",
+      "locations": [
+        "apps/api/node_modules/fresh"
+      ],
+      "license_files": [
+        {
+          "path": "npm/fresh@0.5.2/LICENSE",
+          "sha256": "a0ec0dab16b3666f24950f86d257930ac2ad475557b4bfe245620e0817d8a45d"
+        }
+      ]
+    },
+    {
+      "name": "function-bind",
+      "version": "1.1.2",
+      "license": "MIT",
+      "integrity": "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==",
+      "locations": [
+        "apps/api/node_modules/function-bind"
+      ],
+      "license_files": [
+        {
+          "path": "npm/function-bind@1.1.2/LICENSE",
+          "sha256": "773e131a7684726005a7e4688a80b4620033bc08499bc1404dd1a1eb3bca725e"
+        }
+      ]
+    },
+    {
+      "name": "get-intrinsic",
+      "version": "1.3.0",
+      "license": "MIT",
+      "integrity": "sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==",
+      "locations": [
+        "apps/api/node_modules/get-intrinsic"
+      ],
+      "license_files": [
+        {
+          "path": "npm/get-intrinsic@1.3.0/LICENSE",
+          "sha256": "39c5ec504cf6bd5cd782a7c695828e09189df79f5d94840e4f08feb97b9fd416"
+        }
+      ]
+    },
+    {
+      "name": "get-proto",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==",
+      "locations": [
+        "apps/api/node_modules/get-proto"
+      ],
+      "license_files": [
+        {
+          "path": "npm/get-proto@1.0.1/LICENSE",
+          "sha256": "be46ce1e3b0479af9ce82d22b465a6d7d2ff084fca0aaf3d54172da2b5eb5781"
+        }
+      ]
+    },
+    {
+      "name": "gopd",
+      "version": "1.2.0",
+      "license": "MIT",
+      "integrity": "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==",
+      "locations": [
+        "apps/api/node_modules/gopd"
+      ],
+      "license_files": [
+        {
+          "path": "npm/gopd@1.2.0/LICENSE",
+          "sha256": "d90bf0a089da4cf43d644ed240a0b3825dcdb705e64e38371d56995a4cc9e4c5"
+        }
+      ]
+    },
+    {
+      "name": "has-symbols",
+      "version": "1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==",
+      "locations": [
+        "apps/api/node_modules/has-symbols"
+      ],
+      "license_files": [
+        {
+          "path": "npm/has-symbols@1.1.0/LICENSE",
+          "sha256": "206c1adcf206dc0031b11232f5b054ec5f1662407ab1ca415247921cab2068ab"
+        }
+      ]
+    },
+    {
+      "name": "hasown",
+      "version": "2.0.4",
+      "license": "MIT",
+      "integrity": "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==",
+      "locations": [
+        "apps/api/node_modules/hasown"
+      ],
+      "license_files": [
+        {
+          "path": "npm/hasown@2.0.4/LICENSE",
+          "sha256": "bf9b0d665be2a689851eea667ca9f42066ea1d903b38349c51e6a44b2577680a"
+        }
+      ]
+    },
+    {
+      "name": "help-me",
+      "version": "5.0.0",
+      "license": "MIT",
+      "integrity": "sha512-7xgomUX6ADmcYzFik0HzAxh/73YlKR9bmFzf51CZwR+b6YtzU2m0u49hQCqV6SvlqIqsaxovfwdvbnsw3b/zpg==",
+      "locations": [
+        "node_modules/help-me"
+      ],
+      "license_files": [
+        {
+          "path": "npm/help-me@5.0.0/LICENSE",
+          "sha256": "92ff7edfcfc974e452612d5d7f4977aa7be058ef62979210bcb5c899ae6db60d"
+        }
+      ]
+    },
+    {
+      "name": "http-errors",
+      "version": "2.0.1",
+      "license": "MIT",
+      "integrity": "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==",
+      "locations": [
+        "apps/api/node_modules/http-errors"
+      ],
+      "license_files": [
+        {
+          "path": "npm/http-errors@2.0.1/LICENSE",
+          "sha256": "dcb94ff9b1e037a847bc20589dc81a1066d041fd4c16deb18b0fa968c66cf395"
+        }
+      ]
+    },
+    {
+      "name": "iconv-lite",
+      "version": "0.4.24",
+      "license": "MIT",
+      "integrity": "sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==",
+      "locations": [
+        "apps/api/node_modules/iconv-lite"
+      ],
+      "license_files": [
+        {
+          "path": "npm/iconv-lite@0.4.24/LICENSE",
+          "sha256": "ac779f7314c74f232ef847ea86e714abe25cf6eeb5cc97b69451b74e2af6492d"
+        }
+      ]
+    },
+    {
+      "name": "ieee754",
+      "version": "1.2.1",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==",
+      "locations": [
+        "node_modules/ieee754"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ieee754@1.2.1/LICENSE",
+          "sha256": "18d45466ba3253deae04667e267a91ea8de8548f18c1125264d1c9db28194cc1"
+        }
+      ]
+    },
+    {
+      "name": "inherits",
+      "version": "2.0.4",
+      "license": "ISC",
+      "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
+      "locations": [
+        "node_modules/inherits",
+        "apps/api/node_modules/inherits"
+      ],
+      "license_files": [
+        {
+          "path": "npm/inherits@2.0.4/LICENSE",
+          "sha256": "5ffe28e7ade7d8f10d85d5337a73fd793dac5c462fb9a28fbf8c5046c7fbca3b"
+        }
+      ]
+    },
+    {
+      "name": "ip-address",
+      "version": "10.7.4",
+      "license": "MIT",
+      "integrity": "sha512-DWBMKyeM25D70nrIiTkgQth59/G+naKOTep6huF9j+GmeK3DMD60Zvxg5d5qQnz+38AHgou6ean2LECX+lrKDg==",
+      "locations": [
+        "node_modules/ip-address"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ip-address@10.7.4/LICENSE",
+          "sha256": "f8d791359a50cbcac82c29cb7b0b1b889b28be76fdd35b8ee33f0f7c8704702a"
+        }
+      ]
+    },
+    {
+      "name": "ipaddr.js",
+      "version": "1.9.1",
+      "license": "MIT",
+      "integrity": "sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==",
+      "locations": [
+        "apps/api/node_modules/ipaddr.js"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ipaddr.js@1.9.1/LICENSE",
+          "sha256": "62568a2d1337b77171ecca9db10579163446de1ba6151678e81f06cdc199971b"
+        }
+      ]
+    },
+    {
+      "name": "js-sdsl",
+      "version": "4.3.0",
+      "license": "MIT",
+      "integrity": "sha512-mifzlm2+5nZ+lEcLJMoBK0/IH/bDg8XnJfd/Wq6IP+xoCjLZsTOnV2QpxlVbX9bMnkl5PdEjNtBJ9Cj1NjifhQ==",
+      "locations": [
+        "node_modules/js-sdsl"
+      ],
+      "license_files": [
+        {
+          "path": "npm/js-sdsl@4.3.0/LICENSE",
+          "sha256": "787684b2059945f845f404340e20c4c8e3f325f4ab7aaeaf8e985f38c8d84658"
+        }
+      ]
+    },
+    {
+      "name": "lru-cache",
+      "version": "10.4.3",
+      "license": "ISC",
+      "integrity": "sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==",
+      "locations": [
+        "node_modules/lru-cache"
+      ],
+      "license_files": [
+        {
+          "path": "npm/lru-cache@10.4.3/LICENSE",
+          "sha256": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab"
+        }
+      ]
+    },
+    {
+      "name": "math-intrinsics",
+      "version": "1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==",
+      "locations": [
+        "apps/api/node_modules/math-intrinsics"
+      ],
+      "license_files": [
+        {
+          "path": "npm/math-intrinsics@1.1.0/LICENSE",
+          "sha256": "2b770a704c15de238c3f622b01b0044ddd60b49ee30608ea6991ebf19db7a7a1"
+        }
+      ]
+    },
+    {
+      "name": "media-typer",
+      "version": "0.3.0",
+      "license": "MIT",
+      "integrity": "sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==",
+      "locations": [
+        "apps/api/node_modules/media-typer"
+      ],
+      "license_files": [
+        {
+          "path": "npm/media-typer@0.3.0/LICENSE",
+          "sha256": "74d8054d56d522bdaa340d3d71130cb204997d523a5292c85ac1264dd77c8d06"
+        }
+      ]
+    },
+    {
+      "name": "merge-descriptors",
+      "version": "1.0.3",
+      "license": "MIT",
+      "integrity": "sha512-gaNvAS7TZ897/rVaZ0nMtAyxNyi/pdbjbAwUpFQpN70GqnVfOiXpeUUMKRBmzXaSQ8DdTX4/0ms62r2K+hE6mQ==",
+      "locations": [
+        "apps/api/node_modules/merge-descriptors"
+      ],
+      "license_files": [
+        {
+          "path": "npm/merge-descriptors@1.0.3/LICENSE",
+          "sha256": "62fb7d7c1822fe783895866057247bbd50164b00631fce9e4981d3897bdee4d9"
+        }
+      ]
+    },
+    {
+      "name": "methods",
+      "version": "1.1.2",
+      "license": "MIT",
+      "integrity": "sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==",
+      "locations": [
+        "apps/api/node_modules/methods"
+      ],
+      "license_files": [
+        {
+          "path": "npm/methods@1.1.2/LICENSE",
+          "sha256": "1da7f0788d14d545b2b953f78a27b916d320dfa174c2fcfa124c5aaffa81056e"
+        }
+      ]
+    },
+    {
+      "name": "mime-db",
+      "version": "1.52.0",
+      "license": "MIT",
+      "integrity": "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==",
+      "locations": [
+        "apps/api/node_modules/mime-db"
+      ],
+      "license_files": [
+        {
+          "path": "npm/mime-db@1.52.0/LICENSE",
+          "sha256": "cc1dfd4dafa27271e8212cd3b274eeb3f262e40a6fdab36ddc3f9696f706f58b"
+        }
+      ]
+    },
+    {
+      "name": "mime-types",
+      "version": "2.1.35",
+      "license": "MIT",
+      "integrity": "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==",
+      "locations": [
+        "apps/api/node_modules/mime-types"
+      ],
+      "license_files": [
+        {
+          "path": "npm/mime-types@2.1.35/LICENSE",
+          "sha256": "71f83c4c0621102a56d9853812777b85751bce7e9726f686f5b056c1f8a4b0e6"
+        }
+      ]
+    },
+    {
+      "name": "mime",
+      "version": "1.6.0",
+      "license": "MIT",
+      "integrity": "sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==",
+      "locations": [
+        "apps/api/node_modules/mime"
+      ],
+      "license_files": [
+        {
+          "path": "npm/mime@1.6.0/LICENSE",
+          "sha256": "8f2658c03422c408b2b2ce4d151decc3b1a6fd3d86e5ca9433777bccdcdf75a2"
+        }
+      ]
+    },
+    {
+      "name": "minimist",
+      "version": "1.2.8",
+      "license": "MIT",
+      "integrity": "sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==",
+      "locations": [
+        "node_modules/minimist"
+      ],
+      "license_files": [
+        {
+          "path": "npm/minimist@1.2.8/LICENSE",
+          "sha256": "435a6722c786b0a56fbe7387028f1d9d3f3a2d0fb615bb8fee118727c3f59b7b"
+        }
+      ]
+    },
+    {
+      "name": "mqtt-packet",
+      "version": "9.0.2",
+      "license": "MIT",
+      "integrity": "sha512-MvIY0B8/qjq7bKxdN1eD+nrljoeaai+qjLJgfRn3TiMuz0pamsIWY2bFODPZMSNmabsLANXsLl4EMoWvlaTZWA==",
+      "locations": [
+        "node_modules/mqtt-packet"
+      ],
+      "license_files": [
+        {
+          "path": "npm/mqtt-packet@9.0.2/LICENSE.md",
+          "sha256": "51c9c4054d580356e61a83ef0731046a9909c37e2495894d795828fd56041d27"
+        }
+      ]
+    },
+    {
+      "name": "mqtt",
+      "version": "5.15.2",
+      "license": "MIT",
+      "integrity": "sha512-VWZU2CSUY3U3oN0PSBRDE5SNsFi4zqqNeQ/uv3pZWqY3CrBXD/dhd0ZLjlsk5YnebGlrapi4lRVNJPUNQ5aZ3w==",
+      "locations": [
+        "node_modules/mqtt"
+      ],
+      "license_files": [
+        {
+          "path": "npm/mqtt@5.15.2/LICENSE.md",
+          "sha256": "81b51ef8ac2a8ac8f111ed34ab1a32d63e7f4f7de586bd65f5510fb1ba3a89eb"
+        }
+      ]
+    },
+    {
+      "name": "ms",
+      "version": "2.0.0",
+      "license": "MIT",
+      "integrity": "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==",
+      "locations": [
+        "apps/api/node_modules/ms"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ms@2.0.0/license.md",
+          "sha256": "6652830c2607c722b66f1b57de15877ab8fc5dca406cc5b335afeb365d0f32c1"
+        }
+      ]
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+      "locations": [
+        "node_modules/ms",
+        "apps/api/node_modules/send/node_modules/ms"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ms@2.1.3/license.md",
+          "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801"
+        }
+      ]
+    },
+    {
+      "name": "negotiator",
+      "version": "0.6.3",
+      "license": "MIT",
+      "integrity": "sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==",
+      "locations": [
+        "apps/api/node_modules/negotiator"
+      ],
+      "license_files": [
+        {
+          "path": "npm/negotiator@0.6.3/LICENSE",
+          "sha256": "553d4d20029a24e315b428a1a54a9e109eaa340f2e958a4f50a92362c2c4070b"
+        }
+      ]
+    },
+    {
+      "name": "number-allocator",
+      "version": "1.0.14",
+      "license": "MIT",
+      "integrity": "sha512-OrL44UTVAvkKdOdRQZIJpLkAdjXGTRda052sN4sO77bKEzYYqWKMBjQvrJFzqygI99gL6Z4u2xctPW1tB8ErvA==",
+      "locations": [
+        "node_modules/number-allocator"
+      ],
+      "license_files": [
+        {
+          "path": "npm/number-allocator@1.0.14/LICENSE",
+          "sha256": "0b82716ea785fe76dffcd1755b2e9cda14fd1cf63c47edd4986b8efd3506918f"
+        }
+      ]
+    },
+    {
+      "name": "object-inspect",
+      "version": "1.13.4",
+      "license": "MIT",
+      "integrity": "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==",
+      "locations": [
+        "apps/api/node_modules/object-inspect"
+      ],
+      "license_files": [
+        {
+          "path": "npm/object-inspect@1.13.4/LICENSE",
+          "sha256": "bd40cc437e28a3ad7bef2ad34e6b72e757b182e67bda1acadbab4ef0476f8232"
+        }
+      ]
+    },
+    {
+      "name": "on-finished",
+      "version": "2.4.1",
+      "license": "MIT",
+      "integrity": "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==",
+      "locations": [
+        "apps/api/node_modules/on-finished"
+      ],
+      "license_files": [
+        {
+          "path": "npm/on-finished@2.4.1/LICENSE",
+          "sha256": "8089bcc08845ec143e5761f4a101a65b8c792a0dedbfeeb90a15560c0b77f768"
+        }
+      ]
+    },
+    {
+      "name": "parseurl",
+      "version": "1.3.3",
+      "license": "MIT",
+      "integrity": "sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==",
+      "locations": [
+        "apps/api/node_modules/parseurl"
+      ],
+      "license_files": [
+        {
+          "path": "npm/parseurl@1.3.3/LICENSE",
+          "sha256": "11d017c3b9f1ee3f44caf7203035f0461d5b57e0db8ce1bc03a9af34fa7d3f6b"
+        }
+      ]
+    },
+    {
+      "name": "path-to-regexp",
+      "version": "0.1.13",
+      "license": "MIT",
+      "integrity": "sha512-A/AGNMFN3c8bOlvV9RreMdrv7jsmF9XIfDeCd87+I8RNg6s78BhJxMu69NEMHBSJFxKidViTEdruRwEk/WIKqA==",
+      "locations": [
+        "apps/api/node_modules/path-to-regexp"
+      ],
+      "license_files": [
+        {
+          "path": "npm/path-to-regexp@0.1.13/LICENSE",
+          "sha256": "4eeb3271453a891df609e5a9f4ee79a68307f730c13417a3bfeffa604ac8cf25"
+        }
+      ]
+    },
+    {
+      "name": "process-nextick-args",
+      "version": "2.0.1",
+      "license": "MIT",
+      "integrity": "sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==",
+      "locations": [
+        "node_modules/process-nextick-args"
+      ],
+      "license_files": [
+        {
+          "path": "npm/process-nextick-args@2.0.1/license.md",
+          "sha256": "ecdccbcf39024f624ded480c01c0b25458e1eca8f26ecf040933865ce56d9a4f"
+        }
+      ]
+    },
+    {
+      "name": "process",
+      "version": "0.11.10",
+      "license": "MIT",
+      "integrity": "sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==",
+      "locations": [
+        "node_modules/process"
+      ],
+      "license_files": [
+        {
+          "path": "npm/process@0.11.10/LICENSE",
+          "sha256": "59a400d04c5078579acc27ddd6452c1bdf763f9506e01364700935fbb1a7c91b"
+        }
+      ]
+    },
+    {
+      "name": "proxy-addr",
+      "version": "2.0.8",
+      "license": "MIT",
+      "integrity": "sha512-5nnx0yGyVUcY6t9RnWcARWtwT9F1D8O9rt08htPvnd49W1IgZtmLkhu9WfMzQj1cFxjHIO6connUNVW5k7AVyQ==",
+      "locations": [
+        "apps/api/node_modules/proxy-addr"
+      ],
+      "license_files": [
+        {
+          "path": "npm/proxy-addr@2.0.8/LICENSE",
+          "sha256": "a7996721249a136fbcfc1c201bcb5f414f38a701d4a24f28abe65e16cfcce813"
+        }
+      ]
+    },
+    {
+      "name": "qs",
+      "version": "6.16.0",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-h6fhOIaRrID2CbEY2fqs+7t+UXZo+MLAnU5gRIq85uFtdiUPCdsApMlHhXogKVM4HM2DVbIjGNTTYH2OcmP1vA==",
+      "locations": [
+        "apps/api/node_modules/qs"
+      ],
+      "license_files": [
+        {
+          "path": "npm/qs@6.16.0/LICENSE.md",
+          "sha256": "e7dc37bf662d7f786efcb46c545615e70c1daf458a38385521c63cf6607cdfe1"
+        }
+      ]
+    },
+    {
+      "name": "range-parser",
+      "version": "1.2.1",
+      "license": "MIT",
+      "integrity": "sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==",
+      "locations": [
+        "apps/api/node_modules/range-parser"
+      ],
+      "license_files": [
+        {
+          "path": "npm/range-parser@1.2.1/LICENSE",
+          "sha256": "f655e6291356ec0de7a8f0e69f294961a2cea86678ec94588be1e6a492e278ab"
+        }
+      ]
+    },
+    {
+      "name": "raw-body",
+      "version": "2.5.3",
+      "license": "MIT",
+      "integrity": "sha512-s4VSOf6yN0rvbRZGxs8Om5CWj6seneMwK3oDb4lWDH0UPhWcxwOWw5+qk24bxq87szX1ydrwylIOp2uG1ojUpA==",
+      "locations": [
+        "apps/api/node_modules/raw-body"
+      ],
+      "license_files": [
+        {
+          "path": "npm/raw-body@2.5.3/LICENSE",
+          "sha256": "37876d7de8bdf5e5b9b58a697ebc34044624e493e6f49eff5c938e5226dcac6b"
+        }
+      ]
+    },
+    {
+      "name": "readable-stream",
+      "version": "3.6.2",
+      "license": "MIT",
+      "integrity": "sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==",
+      "locations": [
+        "node_modules/concat-stream/node_modules/readable-stream"
+      ],
+      "license_files": [
+        {
+          "path": "npm/readable-stream@3.6.2/LICENSE",
+          "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+        }
+      ]
+    },
+    {
+      "name": "readable-stream",
+      "version": "4.7.0",
+      "license": "MIT",
+      "integrity": "sha512-oIGGmcpTLwPga8Bn6/Z75SVaH1z5dUut2ibSyAMVhmUggWpmDn2dapB0n7f8nwaSiRtepAsfJyfXIO5DCVAODg==",
+      "locations": [
+        "node_modules/readable-stream"
+      ],
+      "license_files": [
+        {
+          "path": "npm/readable-stream@4.7.0/LICENSE",
+          "sha256": "ec62dc96da0099b87f4511736c87309335527fb7031639493e06c95728dc8c54"
+        }
+      ]
+    },
+    {
+      "name": "rfdc",
+      "version": "1.4.1",
+      "license": "MIT",
+      "integrity": "sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==",
+      "locations": [
+        "node_modules/rfdc"
+      ],
+      "license_files": [
+        {
+          "path": "npm/rfdc@1.4.1/LICENSE",
+          "sha256": "1ce941682a96c7b898ecd125d0f2e22319758ea6f3adbf498a65d649b0f3f7dd"
+        }
+      ]
+    },
+    {
+      "name": "safe-buffer",
+      "version": "5.2.1",
+      "license": "MIT",
+      "integrity": "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==",
+      "locations": [
+        "node_modules/safe-buffer",
+        "apps/api/node_modules/safe-buffer"
+      ],
+      "license_files": [
+        {
+          "path": "npm/safe-buffer@5.2.1/LICENSE",
+          "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+        }
+      ]
+    },
+    {
+      "name": "safer-buffer",
+      "version": "2.1.2",
+      "license": "MIT",
+      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==",
+      "locations": [
+        "apps/api/node_modules/safer-buffer"
+      ],
+      "license_files": [
+        {
+          "path": "npm/safer-buffer@2.1.2/LICENSE",
+          "sha256": "4bc935e71be198c67ddf3c2b5fddb195f6edc182bfc155a96a6db61b44b494b9"
+        }
+      ]
+    },
+    {
+      "name": "send",
+      "version": "0.19.2",
+      "license": "MIT",
+      "integrity": "sha512-VMbMxbDeehAxpOtWJXlcUS5E8iXh6QmN+BkRX1GARS3wRaXEEgzCcB10gTQazO42tpNIya8xIyNx8fll1OFPrg==",
+      "locations": [
+        "apps/api/node_modules/send"
+      ],
+      "license_files": [
+        {
+          "path": "npm/send@0.19.2/LICENSE",
+          "sha256": "25a328069fe771f8ed5b6f983ed4b0e6c84b3312ac0f69b28c3d52dc277962c9"
+        }
+      ]
+    },
+    {
+      "name": "serve-static",
+      "version": "1.16.3",
+      "license": "MIT",
+      "integrity": "sha512-x0RTqQel6g5SY7Lg6ZreMmsOzncHFU7nhnRWkKgWuMTu5NN0DR5oruckMqRvacAN9d5w6ARnRBXl9xhDCgfMeA==",
+      "locations": [
+        "apps/api/node_modules/serve-static"
+      ],
+      "license_files": [
+        {
+          "path": "npm/serve-static@1.16.3/LICENSE",
+          "sha256": "63b9a188d7d43e64b0558b7115255045b9fe20a5fc3ff483421cb899e7f52bcb"
+        }
+      ]
+    },
+    {
+      "name": "setprototypeof",
+      "version": "1.2.0",
+      "license": "ISC",
+      "integrity": "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==",
+      "locations": [
+        "apps/api/node_modules/setprototypeof"
+      ],
+      "license_files": [
+        {
+          "path": "npm/setprototypeof@1.2.0/LICENSE",
+          "sha256": "76d6d1ea0c268da37dd3c961b4fcfb23dee8417fff9e8786d4d44c585b781b69"
+        }
+      ]
+    },
+    {
+      "name": "side-channel-list",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==",
+      "locations": [
+        "apps/api/node_modules/side-channel-list"
+      ],
+      "license_files": [
+        {
+          "path": "npm/side-channel-list@1.0.1/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "side-channel-map",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-VCjCNfgMsby3tTdo02nbjtM/ewra6jPHmpThenkTYh8pG9ucZ/1P8So4u4FGBek/BjpOVsDCMoLA/iuBKIFXRA==",
+      "locations": [
+        "apps/api/node_modules/side-channel-map"
+      ],
+      "license_files": [
+        {
+          "path": "npm/side-channel-map@1.0.1/LICENSE",
+          "sha256": "5e325595b4ea8cfec3802f545b1def5d7b73e4a5b8e9ba63e32a320f67732292"
+        }
+      ]
+    },
+    {
+      "name": "side-channel-weakmap",
+      "version": "1.0.2",
+      "license": "MIT",
+      "integrity": "sha512-WPS/HvHQTYnHisLo9McqBHOJk2FkHO/tlpvldyrnem4aeQp4hai3gythswg6p01oSoTl58rcpiFAjF2br2Ak2A==",
+      "locations": [
+        "apps/api/node_modules/side-channel-weakmap"
+      ],
+      "license_files": [
+        {
+          "path": "npm/side-channel-weakmap@1.0.2/LICENSE",
+          "sha256": "cfc3f455254c0af0655cc3ff46a41ed644b67599f6043346169d285bf2b3cf3b"
+        }
+      ]
+    },
+    {
+      "name": "side-channel",
+      "version": "1.1.1",
+      "license": "MIT",
+      "integrity": "sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==",
+      "locations": [
+        "apps/api/node_modules/side-channel"
+      ],
+      "license_files": [
+        {
+          "path": "npm/side-channel@1.1.1/LICENSE",
+          "sha256": "cfc3f455254c0af0655cc3ff46a41ed644b67599f6043346169d285bf2b3cf3b"
+        }
+      ]
+    },
+    {
+      "name": "smart-buffer",
+      "version": "4.2.0",
+      "license": "MIT",
+      "integrity": "sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==",
+      "locations": [
+        "node_modules/smart-buffer"
+      ],
+      "license_files": [
+        {
+          "path": "npm/smart-buffer@4.2.0/LICENSE",
+          "sha256": "c46e2c333e1c9e6fcfd130cf91b8e54bf67b60fabbc04996f7e199b990353ff3"
+        }
+      ]
+    },
+    {
+      "name": "socks",
+      "version": "2.8.9",
+      "license": "MIT",
+      "integrity": "sha512-LJhUYUvItdQ0LkJTmPeaEObWXAqFyfmP85x0tch/ez9cahmhlBBLbIqDFnvBnUJGagb0JbIQrkBs1wJ+yRYpEw==",
+      "locations": [
+        "node_modules/socks"
+      ],
+      "license_files": [
+        {
+          "path": "npm/socks@2.8.9/LICENSE",
+          "sha256": "4f4f28866154c8d758241a64296e8790d45d7d912ff7b029930778c06d8f2a72"
+        }
+      ]
+    },
+    {
+      "name": "split2",
+      "version": "4.2.0",
+      "license": "ISC",
+      "integrity": "sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==",
+      "locations": [
+        "node_modules/split2"
+      ],
+      "license_files": [
+        {
+          "path": "npm/split2@4.2.0/LICENSE",
+          "sha256": "c372ef2fa1dfcb124ed807609751e75e3a009f108c5724916b489288fcb88a0c"
+        }
+      ]
+    },
+    {
+      "name": "statuses",
+      "version": "2.0.2",
+      "license": "MIT",
+      "integrity": "sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==",
+      "locations": [
+        "apps/api/node_modules/statuses"
+      ],
+      "license_files": [
+        {
+          "path": "npm/statuses@2.0.2/LICENSE",
+          "sha256": "512cfa4d5e7a7569c7ae4dd95241cb6ae2aaf648ef9ebd080c01bd24868d26e9"
+        }
+      ]
+    },
+    {
+      "name": "string_decoder",
+      "version": "1.3.0",
+      "license": "MIT",
+      "integrity": "sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==",
+      "locations": [
+        "node_modules/string_decoder"
+      ],
+      "license_files": [
+        {
+          "path": "npm/string_decoder@1.3.0/LICENSE",
+          "sha256": "11f2aafb37d06b3ee5bdaf06e9811141d0da05263c316f3d627f45c20d43261b"
+        }
+      ]
+    },
+    {
+      "name": "toidentifier",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==",
+      "locations": [
+        "apps/api/node_modules/toidentifier"
+      ],
+      "license_files": [
+        {
+          "path": "npm/toidentifier@1.0.1/LICENSE",
+          "sha256": "a832d679750e49ab433626ab196350b89964b60eb0d3edd3341887c7d5f4c128"
+        }
+      ]
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1",
+      "license": "0BSD",
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+      "locations": [
+        "node_modules/tslib"
+      ],
+      "license_files": [
+        {
+          "path": "npm/tslib@2.8.1/LICENSE.txt",
+          "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+        }
+      ]
+    },
+    {
+      "name": "type-is",
+      "version": "1.6.18",
+      "license": "MIT",
+      "integrity": "sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==",
+      "locations": [
+        "apps/api/node_modules/type-is"
+      ],
+      "license_files": [
+        {
+          "path": "npm/type-is@1.6.18/LICENSE",
+          "sha256": "23d466b1b134b415b66fa50c6526b4cf3e7b9258554da88d3abb371721e7ce68"
+        }
+      ]
+    },
+    {
+      "name": "typedarray",
+      "version": "0.0.6",
+      "license": "MIT",
+      "integrity": "sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==",
+      "locations": [
+        "node_modules/typedarray"
+      ],
+      "license_files": [
+        {
+          "path": "npm/typedarray@0.0.6/LICENSE",
+          "sha256": "26181ebee1063f3dc6766a3b6d05999a0da058f172eadf2ca5d15105ffd9735a"
+        }
+      ]
+    },
+    {
+      "name": "undici-types",
+      "version": "8.3.0",
+      "license": "MIT",
+      "integrity": "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==",
+      "locations": [
+        "node_modules/undici-types"
+      ],
+      "license_files": [
+        {
+          "path": "npm/undici-types@8.3.0/LICENSE",
+          "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+        }
+      ]
+    },
+    {
+      "name": "unpipe",
+      "version": "1.0.0",
+      "license": "MIT",
+      "integrity": "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==",
+      "locations": [
+        "apps/api/node_modules/unpipe"
+      ],
+      "license_files": [
+        {
+          "path": "npm/unpipe@1.0.0/LICENSE",
+          "sha256": "1a526fbe8d8577f5a4b1c2821842b55b7c0e18862531c62ae4ce69c9b19b74b6"
+        }
+      ]
+    },
+    {
+      "name": "util-deprecate",
+      "version": "1.0.2",
+      "license": "MIT",
+      "integrity": "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==",
+      "locations": [
+        "node_modules/util-deprecate"
+      ],
+      "license_files": [
+        {
+          "path": "npm/util-deprecate@1.0.2/LICENSE",
+          "sha256": "0154425673db15cdfa80ecba2c9b1f1a867f7197a006764712849bfc3a93cbb7"
+        }
+      ]
+    },
+    {
+      "name": "utils-merge",
+      "version": "1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==",
+      "locations": [
+        "apps/api/node_modules/utils-merge"
+      ],
+      "license_files": [
+        {
+          "path": "npm/utils-merge@1.0.1/LICENSE",
+          "sha256": "6e7d699cdd1e4fa837ba7718ea49841aa67201b449ea8b3f9cf274be15974a64"
+        }
+      ]
+    },
+    {
+      "name": "vary",
+      "version": "1.1.2",
+      "license": "MIT",
+      "integrity": "sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==",
+      "locations": [
+        "apps/api/node_modules/vary"
+      ],
+      "license_files": [
+        {
+          "path": "npm/vary@1.1.2/LICENSE",
+          "sha256": "bd47ce7b88c7759630d1e2b9fcfa170a0f1fde522be09e13fb1581a79d090400"
+        }
+      ]
+    },
+    {
+      "name": "worker-factory",
+      "version": "7.0.50",
+      "license": "MIT",
+      "integrity": "sha512-hhwc0G+sFwM4qBuhJIUBn2p1Jf8v/FwmLUANBf/Q+Lt2uI8mfIZQhXaZQACodQD4R7Zp6cn/6702bIvNn2puJQ==",
+      "locations": [
+        "node_modules/worker-factory"
+      ],
+      "license_files": [
+        {
+          "path": "npm/worker-factory@7.0.50/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "worker-timers-broker",
+      "version": "8.0.18",
+      "license": "MIT",
+      "integrity": "sha512-FrjzDVX1wKfZN0gRbCFqv8VHuTncG4sbI/WGEg4tSSQeIsnwqg4YBYWMAHYLJtUDEYYmiK65UKFrVMVk2irDSg==",
+      "locations": [
+        "node_modules/worker-timers-broker"
+      ],
+      "license_files": [
+        {
+          "path": "npm/worker-timers-broker@8.0.18/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "worker-timers-worker",
+      "version": "9.0.15",
+      "license": "MIT",
+      "integrity": "sha512-KKUe7lZ/Aignr51H6hOUik8LwTnIgojH/1lwhli8A8qIEIyewogZTpNpMW5B6BF7nmwBOkUoTYgf1H3QShcjSA==",
+      "locations": [
+        "node_modules/worker-timers-worker"
+      ],
+      "license_files": [
+        {
+          "path": "npm/worker-timers-worker@9.0.15/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "worker-timers",
+      "version": "8.0.34",
+      "license": "MIT",
+      "integrity": "sha512-WXL+Dqsm0G6dnC66rQsvM3tPT2adhbqSirWUCZGglkALOr8ocS0KlpU0iuKbjflJOlu3ydZikMEVrYnHOM9suw==",
+      "locations": [
+        "node_modules/worker-timers"
+      ],
+      "license_files": [
+        {
+          "path": "npm/worker-timers@8.0.34/LICENSE",
+          "sha256": "04238a17c611b988a3ef5934e6c247acd4a344c837f60b223f3d9ffb57aa4dde"
+        }
+      ]
+    },
+    {
+      "name": "ws",
+      "version": "8.21.3",
+      "license": "MIT",
+      "integrity": "sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==",
+      "locations": [
+        "node_modules/ws"
+      ],
+      "license_files": [
+        {
+          "path": "npm/ws@8.21.3/LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+        }
+      ]
+    }
+  ]
+}

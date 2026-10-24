@@ -1,0 +1,55 @@
+name: ${SPATIAL_PROJECT_NAME:-opensupos-spatial}
+services:
+  warehouse:
+    image: ${SPATIAL_IMAGE:-opensupos-spatial-warehouse:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.supos
+    container_name: ${SPATIAL_CONTAINER_NAME:-opensupos-spatial}
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      SPATIAL_AUTH_PROVIDER: supos
+      SPATIAL_MODE: ${SPATIAL_MODE:-integration}
+      SPATIAL_SPACE_ADMIN_IDS: ${SPATIAL_SPACE_ADMIN_IDS:-}
+      SPATIAL_BASE_PATH: ${SPATIAL_BASE_PATH:-/warehouse}
+      SPATIAL_PUBLIC_ORIGIN: ${SPATIAL_PUBLIC_ORIGIN:-http://localhost:28088}
+      SPATIAL_HOST_ORIGINS: ${SPATIAL_HOST_ORIGINS:-}
+      SUPOS_USERINFO_URL: ${SUPOS_USERINFO_URL:-http://backend:8080/inter-api/supos/auth/userinfo}
+      # 留空时不启用出站；配置别名与路径才使用UNS事件模型确认。
+      SUPOS_MQTT_URL: ${SUPOS_MQTT_URL:-}
+      SUPOS_MQTT_USER: ${SUPOS_MQTT_USER:-}
+      SUPOS_MQTT_PASS: ${SUPOS_MQTT_PASS:-}
+      SUPOS_UNS_EVENT_ALIAS: ${SUPOS_UNS_EVENT_ALIAS:-}
+      SUPOS_UNS_EVENT_PATH: ${SUPOS_UNS_EVENT_PATH:-}
+      SUPOS_INTERNAL_API: ${SUPOS_INTERNAL_API:-http://backend:8080}
+      OUTBOUND_INTERVAL_MS: ${OUTBOUND_INTERVAL_MS:-0}
+      SUPOS_WAREHOUSE_SITE: ${SUPOS_WAREHOUSE_SITE:-}
+      SUPOS_WAREHOUSE_ALIAS: ${SUPOS_WAREHOUSE_ALIAS:-}
+      SUPOS_WAREHOUSE_NAME: ${SUPOS_WAREHOUSE_NAME:-}
+      SUPOS_WAREHOUSE_INTERVAL_MS: ${SUPOS_WAREHOUSE_INTERVAL_MS:-15000}
+      SUPOS_WAREHOUSE_REGISTER: ${SUPOS_WAREHOUSE_REGISTER:-0}
+      SUPOS_WAREHOUSE_UPDATE: ${SUPOS_WAREHOUSE_UPDATE:-0}
+      SPATIAL_DATA_DIR: /data
+      SPATIAL_UPLOAD_DIR: /uploads
+    volumes:
+      - inventory:/data
+      - assets:/uploads
+    networks:
+      - platform
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+networks:
+  platform:
+    external: true
+    name: ${SPATIAL_NETWORK:-opensupos-lab-default_network}
+volumes:
+  inventory:
+    name: ${SPATIAL_INVENTORY_VOLUME:-opensupos-spatial_inventory}
+    external: ${SPATIAL_EXTERNAL_VOLUMES:-false}
+  assets:
+    name: ${SPATIAL_ASSETS_VOLUME:-opensupos-spatial_assets}
+    external: ${SPATIAL_EXTERNAL_VOLUMES:-false}

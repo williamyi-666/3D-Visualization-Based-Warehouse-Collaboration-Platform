@@ -1,0 +1,14 @@
+FROM node:24-bookworm-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY apps/api/package*.json ./apps/api/
+RUN cd apps/api && npm ci --omit=dev
+COPY apps ./apps
+COPY packages ./packages
+COPY third-party ./third-party
+COPY tools ./tools
+RUN node tools/collect-licenses.mjs
+RUN node tools/build-mobile-pwa.mjs
+COPY LICENSE README.md ./
+CMD ["node", "apps/api/server.mjs"]

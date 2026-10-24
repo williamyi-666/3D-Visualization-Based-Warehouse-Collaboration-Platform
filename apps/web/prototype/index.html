@@ -1,0 +1,1653 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>3D可视化仓储协同平台</title>
+  <link rel="stylesheet" href="./stocktake.css">
+  <script src="./interface-entry.js"></script>
+  <style>
+    :root {
+      --bg:#0b1120; --bg-2:#0e1730; --surface:#0f172a; --surface-2:#15203a; --surface-3:#1e293b; --surface-4:#243149;
+      --border:#27344b; --border-soft:#1c2738; --border-strong:#33425e;
+      --text:#e8eef9; --text-2:#9fb0c9; --text-3:#cbd5e1; --muted:#64748b;
+      --primary:#3b82f6; --primary-2:#2563eb;
+      --success:#22c55e; --success-2:#16a34a;
+      --danger:#ef4444; --danger-2:#b91c1c; --warn:#f59e0b;
+      --radius:12px; --radius-sm:9px; --radius-lg:16px;
+      --shadow:0 14px 38px rgba(0,0,0,.5); --shadow-sm:0 6px 18px rgba(0,0,0,.35); --shadow-xs:0 2px 8px rgba(0,0,0,.25);
+      --ring:0 0 0 3px rgba(59,130,246,.35);
+      --accent-grad:linear-gradient(135deg,#3b82f6,#6366f1);
+      --ease:cubic-bezier(.2,.7,.3,1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: radial-gradient(130% 100% at 50% -12%, #111c38 0%, var(--bg) 58%) fixed; color: var(--text); }
+    #app { position: relative; display: flex; height: 100vh; }
+    /* container-type：顶栏的可用宽度由场景区决定（右侧还有库位栏，实测 1264 视口下场景只有 944px），
+       用容器查询才能在"空间真的不够"时收窄工具栏，而不是按视口宽度猜。 */
+    #scene { position: relative; flex: 1 1 auto; min-width: 0; container-type: inline-size; container-name: scene; }
+    #scene canvas { display: block; touch-action: none; }
+
+    /* 顶栏：玻璃质感 + 分组胶囊 */
+    #topbar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      /* 单行 + 横向滚动：以前是 flex-wrap: wrap，库位栏占掉 320px 后可视宽度只剩 ~944px，
+         而顶栏内容是原子分组（搜索组 533px 等不能拆），于是被挤成 4 行、高 219px，直接盖住 3D 视图。
+         改成 nowrap + 横向滚动后高度恒定一行，内容靠滚动取用。 */
+      display: flex; gap: 8px; align-items: center; padding: 10px 12px;
+      flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
+      scrollbar-width: thin;
+      background: rgba(11,17,32,.72);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border-bottom: 1px solid var(--border-soft);
+      color: var(--text);
+    }
+    /* 禁止子项被压缩：否则 nowrap 后 flex 会把「🏢 3D可视化仓储协同平台」标题挤成 23px 宽、
+       文字折成 5 行反而把顶栏撑高（实测 126px）。 */
+    #topbar > * { flex-shrink: 0; }
+    #topbar .title { font-weight: 700; margin-right: 2px; letter-spacing: .3px; white-space: nowrap; }
+    .tb-group { display: inline-flex; gap: 6px; align-items: center; padding: 4px 8px; background: rgba(21,32,58,.55); border: 1px solid var(--border-soft); border-radius: 999px; }
+    .tb-group .sep { width: 1px; height: 20px; background: var(--border); margin: 0 3px; }
+    .tb-group .glabel { font-size: 11px; color: var(--muted); padding: 0 2px; }
+    #searchInput {
+      flex: 1 1 160px; max-width: 260px; padding: 9px 14px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    #searchInput:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    #topbar button, .toolbtn {
+      padding: 8px 12px; border: 1px solid transparent; border-radius: 999px;
+      background: var(--surface-3); color: var(--text);
+      cursor: pointer; font-size: 13px; white-space: nowrap; transition: background .15s, transform .05s, box-shadow .15s;
+    }
+    #topbar button:hover, .toolbtn:hover { background: #2b3a55; }
+    #topbar button:active, .toolbtn:active { transform: translateY(1px); }
+    #topbar button.active, .toolbtn.active { background: #1d4ed8; border-color: #2563eb; color: #fff; box-shadow: 0 0 0 1px #2563eb inset; }
+    #addBtn { background: var(--success-2) !important; border-color: transparent !important; font-weight: 600; }
+    #addBtn:hover { background: #15803d !important; }
+    #topbar .active { background: var(--primary-2) !important; box-shadow: var(--ring); }
+    /* 位置面包屑：一眼看清「仓库 › 库区」层级 */
+    #locBreadcrumb {
+      display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px;
+      border-radius: 999px; background: rgba(37,99,235,.18);
+      border: 1px solid rgba(59,130,246,.4); color: var(--text);
+      font-size: 13px; font-weight: 500; white-space: nowrap;
+    }
+    #locBreadcrumb .sep { color: var(--muted); font-weight: 400; }
+    #locBreadcrumb .rm { color: #bae6fd; }
+    .tb-group .glabel .ico { margin-right: 3px; }
+    /* 库区下拉：左侧强调色，表示它是「仓库」的子级 */
+    #roomSel { border-left: 2px solid var(--primary) !important; padding-left: 10px !important; }
+    .cascade-mark { color: var(--primary); font-size: 14px; margin: 0 1px 0 -2px; }
+    /* 「当前库区」按钮：合并了原来的「仓库」「库区」两个下拉与面包屑 */
+    .loc-picker { display: inline-flex; align-items: center; max-width: 340px; }
+    .loc-picker .loc-breadcrumb { display: inline-flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .loc-picker .loc-breadcrumb .sep { color: var(--muted); margin: 0 2px; }
+    .loc-picker .loc-breadcrumb .rm { color: #93c5fd; font-weight: 600; }
+    .loc-picker .lp-caret { color: var(--muted); font-size: 11px; margin-left: 5px; }
+    /* 「当前库区」选择器弹层 */
+    .lp-box { width: min(560px, 94vw); }
+    .lp-tip { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+    .lp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .lp-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .lp-head { font-size: 12px; color: var(--text-2); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .lp-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; padding-right: 2px; }
+    .lp-item { text-align: left; padding: 9px 12px; border-radius: 9px; border: 1px solid var(--border-soft);
+      background: var(--surface-2); color: var(--text); font-size: 13px; cursor: pointer;
+      transition: background .14s, border-color .14s, color .14s; }
+    .lp-item:hover { background: var(--surface-3); border-color: var(--border); }
+    .lp-item.on { background: rgba(59,130,246,.2); border-color: var(--primary); color: #dbeafe; font-weight: 600; }
+    .lp-item.on::after { content: '✓'; float: right; color: var(--primary); }
+    .lp-empty { font-size: 12px; color: var(--muted); padding: 8px 2px; }
+    .lp-add { text-align: left; padding: 9px 12px; border-radius: 9px; border: 1px dashed var(--border-strong);
+      background: transparent; color: var(--text-2); font-size: 13px; cursor: pointer; transition: border-color .14s, color .14s; }
+    .lp-add:hover { border-color: var(--primary); color: #93c5fd; }
+    @media (max-width: 560px) { .lp-grid { grid-template-columns: 1fr; } .lp-list { max-height: 26vh; } }
+    #tbMenuBtn { display: none; }
+    .more-wrap { position: relative; }
+    /* 「更多」下拉：fixed 定位（挂在 body 上），left/top 由 JS 在打开时按按钮位置算。
+       不能用 absolute —— 顶栏是横向滚动容器，另一轴也会跟着被裁剪，下拉会被切掉。 */
+    .more-panel {
+      position: fixed; z-index: 40;
+      display: flex; flex-direction: column; gap: 6px; min-width: 150px; max-height:calc(100vh - 16px); overflow-y:auto;
+      padding: 8px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow);
+    }
+    .more-panel.hidden { display: none; }
+    .more-panel .toolbtn { width: 100%; text-align: left; justify-content: flex-start; }
+    /* 窄屏：顶栏本来就宽到要滚动，把次级工具按钮的文字收掉只留图标，减少滚动距离。
+       每个按钮都有 title，悬停仍可确认含义。 */
+    @media (max-width: 720px) {
+      #topbar .tb-lbl { display: none; }
+    }
+    /* 场景区不够宽时（含桌面窗口被库位栏占掉空间的情况）也把文字收掉，减少横向滚动 */
+    @container scene (max-width: 1100px) {
+      #topbar .tb-lbl { display: none; }
+    }
+
+    /* ========== 左侧垂直工具栏（从顶栏迁移的操作按钮）========== */
+    #leftToolbar {
+      flex: 0 0 0; width: 0; overflow: hidden;
+      background: rgba(11,17,32,.82); backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      border-right: 1px solid var(--border-soft);
+      display: flex; flex-direction: column; align-items: stretch;
+      transition: width .28s var(--ease), flex-basis .28s var(--ease), height .28s var(--ease);
+      z-index: 6; position: relative;
+      align-self: flex-start; height: auto;
+    }
+    #leftToolbar.lt-open { flex: 0 0 188px; width: 188px; align-self: stretch; }
+    /* 收缩态：保留 48px 宽图标列，只包裹内容高度，绝不撑满整屏 */
+    #leftToolbar:not(.lt-open) { flex: 0 0 48px !important; width: 48px !important; max-height: none !important; height: auto !important; }
+    .panel-toggle {
+      display: flex; align-items: center; justify-content: center; gap: 2px;
+      min-height: 44px; padding: 0; color: #cbd5e1; cursor: pointer;
+      background: var(--surface-3); border: 1px solid var(--border); border-radius: 10px;
+      transition: background .15s, color .15s, right .28s var(--ease);
+    }
+    .panel-toggle:hover { color: #fff; background: #2b4162; border-color: #6086ba; }
+    .panel-toggle:focus-visible { outline: 2px solid #60a5fa; outline-offset: -3px; }
+    .panel-toggle svg { width: 20px; height: 20px; flex-shrink: 0; pointer-events: none; }
+    .lt-toggle { flex: 0 0 auto; width: calc(100% - 4px); margin: 4px 2px 0; }
+    #ltBody {
+      display: flex; flex-direction: column; gap: 3px; padding: 8px; overflow-y: auto; overflow-x: hidden;
+      flex: 1;
+    }
+    .lt-grp {
+      font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); padding: 9px 6px 3px; white-space: nowrap;
+    }
+    .lt-btn {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 9px 12px; border: 1px solid transparent; border-radius: 10px;
+      background: var(--surface-2); color: var(--text); cursor: pointer;
+      font-size: 13px; white-space: nowrap; text-align: left;
+      transition: background .15s, transform .08s, box-shadow .15s, border-color .15s;
+    }
+    .lt-btn[hidden] { display: none !important; }
+    a.lt-btn { box-sizing: border-box; text-decoration: none; }
+    .lt-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .lt-btn .ic { font-size: 15px; line-height: 1; flex: 0 0 18px; width: 18px; text-align: center; }
+    .lt-btn .lb { flex: 1; }
+    .lt-btn:hover { background: #2b3a55; transform: translateX(3px); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+    .lt-btn:active { transform: translateX(0) scale(.98); }
+    .lt-btn.active { background: var(--primary-2) !important; border-color: #2563eb !important; box-shadow: var(--ring); color: #fff; }
+    .lt-btn.lt-primary { background: var(--success-2) !important; font-weight: 600; color: #fff; }
+    .lt-btn.lt-primary:hover { background: #15803d !important; transform: translateX(3px); }
+    .lt-select {
+      width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); font-size: 13px; outline: none; margin-top: 2px;
+    }
+    .lt-select:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    /* —— 收缩态：仅图标列 —— */
+    #leftToolbar:not(.lt-open) #ltBody { gap: 4px; padding: 8px 4px; }
+    #leftToolbar:not(.lt-open) .lt-grp { display: none; }
+    #leftToolbar:not(.lt-open) .lt-btn { justify-content: center; padding: 10px 0; gap: 0; }
+    #leftToolbar:not(.lt-open) .lt-btn .lb { display: none; }
+    #leftToolbar:not(.lt-open) .lt-select { display: none; }
+
+    /* ========== 右侧侧栏收缩 ========== */
+    #sidebar {
+      flex: 0 0 320px; background: var(--surface); color: var(--text); padding: 18px;
+      overflow-y: auto; border-left: 1px solid var(--border-soft);
+      position: relative; transition: width .28s var(--ease), flex-basis .28s var(--ease), padding .28s var(--ease);
+    }
+    #sidebar.sb-collapsed { flex: 0 0 0; width: 0; padding: 0; overflow: hidden; border-left: none; }
+    /* 侧栏收缩切换按钮：作为 #app 的孙子、绝对定位（left 锚点用 right，跟随侧栏宽度移动）。
+       故意放在 #sidebar 外面，避免被侧栏的 overflow 裁切。 */
+    .sb-toggle {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      right: 320px; width: 44px; height: 48px; border-radius: 10px 0 0 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.18); z-index: 7;
+    }
+    /* 侧栏收缩后把切换钮贴到场景区右边缘（侧栏宽度归零即 right:0） */
+    #sidebar.sb-collapsed ~ .sb-toggle { right: 0; }
+
+    #searchMsg { position: absolute; top: 80px; left: 12px; right: 12px; z-index: 5; color: #fde68a; font-size: 13px; text-shadow: 0 1px 2px #000; }
+    #legend {
+      position: absolute; bottom: 14px; left: 14px; z-index: 5; display: flex; gap: 12px; flex-wrap: wrap;
+      color: var(--text-2); font-size: 12px; background: rgba(11,17,32,.66); padding: 8px 12px;
+      border: 1px solid var(--border-soft); border-radius: 12px; backdrop-filter: blur(8px);
+    }
+    #legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 5px; vertical-align: -1px; }
+
+    /* 侧栏子元素（基础规则已在上方左侧工具栏区块内统一定义） */
+    #sidebar h3 { margin: 0 0 10px; font-size: 15px; }
+    #sidebar .occ { color: var(--text-2); font-size: 13px; margin-bottom: 10px; }
+    #sidebar .hint { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    #sidebar .muted { color: var(--muted); }
+    #sidebar .code { color: #7dd3fc; font-family: ui-monospace, monospace; font-size: 12px; }
+    #sidebar img.cover { width: 100%; border-radius: 8px; margin: 4px 0; }
+    .card { background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+    .loc-card { background: linear-gradient(135deg, rgba(37,99,235,.16), rgba(15,23,42,.25)); border: 1px solid rgba(59,130,246,.35); }
+    .loc-card h3 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pill { font-size: 12px; color: #bae6fd; background: rgba(14,165,233,.16); border: 1px solid rgba(56,189,248,.4); padding: 2px 10px; border-radius: 999px; font-family: ui-monospace, monospace; }
+    .occ-bar { height: 8px; background: var(--surface-3); border-radius: 999px; overflow: hidden; margin: 10px 0 12px; }
+    .occ-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#38bdf8,#6366f1); }
+    .occ-fill.hi { background: linear-gradient(90deg,#f59e0b,#ef4444); }
+    ul.list { list-style: none; padding: 0; margin: 8px 0; }
+    ul.list li { padding: 9px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+    /* 「已用格位」列表项可点定位：给出手型光标与左右内缩的 hover 反馈 */
+    ul.list li.ov-cell { cursor: pointer; border-radius: 6px; padding-left: 6px; padding-right: 6px; transition: background .14s; }
+    ul.list li.ov-cell:hover { background: rgba(59,130,246,.12); }
+    ul.list li.ov-cell .code { color: #93c5fd; }
+    #sidebar ul { list-style: none; padding: 0; margin: 8px 0; }
+    #sidebar li { padding: 7px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+    .item-card { background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; }
+    .item-card .row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+    .item-card .nm { font-weight: 600; }
+    .item-card .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .item-card .acts { display: flex; gap: 6px; flex-shrink: 0; }
+    .item-card .acts button { font-size: 11px; padding: 4px 10px; border: 0; border-radius: 7px; cursor: pointer; color: #fff; }
+    .item-card .acts .edit { background: var(--primary-2); }
+    .item-card .acts .del { background: var(--danger-2); }
+    #sidebar li .row { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+    #sidebar li .acts { display: flex; gap: 6px; flex-shrink: 0; }
+    #sidebar li .acts button { font-size: 11px; padding: 3px 8px; border: 0; border-radius: 6px; cursor: pointer; color: #fff; }
+    #sidebar li .acts .edit { background: var(--primary-2); }
+    #sidebar li .acts .del { background: var(--danger-2); }
+    #sidebar button.full { margin-top: 6px; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--primary-2); color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; transition: background .15s; }
+    #sidebar button.full:hover { background: #1d4ed8; }
+    #sidebar button.ghost { width: 100%; padding: 10px; margin-top: 6px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-2); cursor: pointer; font-size: 13px; transition: background .15s, color .15s; }
+    #sidebar button.ghost:hover { background: var(--surface-2); color: var(--text); }
+    #sidebar .nameLine { display: flex; gap: 6px; align-items: center; margin: 10px 0; font-size: 13px; }
+    #sidebar .nameLine label { color: var(--muted); white-space: nowrap; }
+    #sidebar .nameLine input { flex: 1; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; }
+    #sidebar .nameLine input:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    #sidebar .nameLine input[type="number"] { flex: 0 0 90px; max-width: 110px; }
+    #sidebar .nameLine button { background: var(--success-2); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+    #sidebar .nameLine button:hover { background: #047857; }
+    #sidebar .nameLine button:disabled { background: var(--surface-3); color: var(--muted); cursor: not-allowed; }
+    #sidebar .photoWall { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    #sidebar .photoWall .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-soft); }
+    #sidebar .photoWall .thumb:hover { border-color: var(--primary); }
+    #sidebar .nameMsg { font-size: 12px; margin-top: -4px; margin-bottom: 8px; }
+
+    /* 弹窗通用 */
+    .modal { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+      background: rgba(2,6,23,.62); backdrop-filter: blur(4px); padding: 16px; }
+    .modal.hidden { display: none; }
+    body.auth-required > :not(#loginMask) { display: none !important; }
+    /* 弹窗层级：layoutModal 作为大容器在最底（20）；其内部打开的货架/格位编辑弹窗需在其上（30）；确认/输入弹窗始终最顶（100） */
+    #layoutModal { z-index: 20; }
+    #furnModal, #furnSetModal, #mergeModal, #roomModal { z-index: 30; }
+    #confirmModal { z-index:100;width:100%;height:100%;max-width:none;max-height:none;margin:0;border:0;box-sizing:border-box; } /* 原生顶层对话框可覆盖团队任务等模态窗口 */
+    #confirmModal::backdrop { background:transparent; }
+    #inputModal { z-index: 100; } /* 通用输入弹窗（复制份数等）也需压在编辑弹窗之上 */
+    .modal-box { width: min(440px, 94vw); max-height: 92vh; overflow-y: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow); }
+    .modal-box h3 { margin: 0 0 14px; font-size: 17px; }
+    .modal-box label { display: block; font-size: 13px; color: var(--text-2); margin: 12px 0 5px; }
+    .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
+    .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    .modal-box img.preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 10px; margin-top: 8px; }
+    .modal-box img.preview.hidden { display: none; }
+    .modal-box .msg { font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .nocell-hint {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-top: 6px; padding: 9px 11px; font-size: 12.5px; color: #fde68a;
+      background: rgba(180, 83, 9, .14); border: 1px solid rgba(251, 191, 36, .32); border-radius: 9px;
+    }
+    .nocell-hint.hidden { display: none; }
+    .nocell-hint button {
+      padding: 5px 10px; border: 0; border-radius: 7px; cursor: pointer;
+      background: var(--primary-2); color: #fff; font-size: 12.5px; font-weight: 600;
+    }
+    .nocell-hint button:hover { filter: brightness(1.08); }
+    .help-sec { margin: 16px 0 7px; font-size: 13px; font-weight: 700; color: var(--text); }
+    .help-steps { margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-2); line-height: 1.85; }
+    .help-steps b { color: var(--text); }
+    .help-tree { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 13.5px; color: var(--text); }
+    .help-tree i { color: var(--primary); font-style: normal; }
+    .help-note { font-size: 12.5px; color: var(--muted); margin: 7px 0 0; line-height: 1.6; }
+    .help-note code, .help-tips code { background: var(--surface-3); padding: 1px 5px; border-radius: 4px; color: #7dd3fc; }
+    .help-tips { margin: 0; padding-left: 20px; font-size: 12.5px; color: var(--text-2); line-height: 1.85; }
+    .help-tips b { color: var(--text); }
+    .msg.ok { color: #86efac; } .msg.err { color: #fca5a5; } .msg.warn { color: #fde68a; }
+    .modal-box .actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-box .actions button { flex: 1; padding: 11px; border: 0; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; font-weight: 600; transition: filter .15s, transform .05s; }
+    .modal-box .actions button:active { transform: translateY(1px); }
+    .modal-box .actions .btn-primary { background: var(--primary); color: #fff; }
+    .modal-box .actions .btn-danger { background: #b91c1c; color: #fff; }
+    .modal-box .actions .btn-ghost { background: var(--surface-3); color: var(--text); }
+    .modal-box .actions button:hover { filter: brightness(1.08); }
+    #f_cancel, #imp_cancel, #scan_cancel, #merge_cancel { background: var(--surface-3); color: var(--text); }
+    #f_cancel:hover, #imp_cancel:hover, #scan_cancel:hover, #merge_cancel:hover { background: #2b3a55; }
+    #merge_clear { flex: 0 0 auto; padding: 6px 12px; font-size: 12px; font-weight: 500; background: transparent; color: #f87171; border: 1px solid #7f1d1d; }
+    #merge_clear:hover { background: rgba(127,29,29,.28); color: #fca5a5; }
+    /* 合并弹窗：取消/清除靠左一组，保存布局单独推到最右，拉开危险操作与主操作距离 */
+    #mergeModal .actions button { flex: 0 0 auto; }
+    #merge_save { margin-left: auto; }
+    #f_save, #merge_save { background: var(--success-2); color: #fff; }
+    #f_save:hover, #merge_save:hover { background: #15803d; }
+    #imp_save { background: var(--success-2); color: #fff; }
+    #imp_save:hover { background: #15803d; }
+    .csv-tip { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+    .csv-tip code { background: var(--surface-3); padding: 1px 5px; border-radius: 4px; color: #7dd3fc; }
+
+    /* 系统管理弹窗 */
+    .hidden { display: none !important; }
+    .modal-card { width: min(760px, 94vw); max-height: 92vh; overflow-y: auto; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow); }
+    .io-table th, .io-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+    .io-table th { position: sticky; top: 0; background: var(--surface-2); color: var(--muted); font-weight: 600; }
+    .io-table td { color: var(--text); }
+    .io-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .io-tag.inbound { background: #14321f; color: #86efac; }
+    .io-tag.outbound { background: #3a1620; color: #fca5a5; }
+    .io-tag.move { background: #1e293b; color: #93c5fd; }
+    .io-tag.merge { background: #2a2440; color: #c4b5fd; }
+    .io-tag.relocate { background: #1e293b; color: #93c5fd; }
+    .io-tag.erp_sync { background: #3a3320; color: #fcd34d; }
+    .io-tag.other { background: #334155; color: #cbd5e1; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+    .modal-header h3 { margin: 0; font-size: 17px; }
+    .modal-x { background: transparent; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; }
+    .tab { background: var(--surface-3); color: var(--muted); border: 0; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: filter .15s; }
+    .tab.active { background: #2563eb; color: #fff; }
+    #svcList table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #svcList th, #svcList td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    #svcList th { color: var(--muted); font-weight: 600; }
+    #svcList .revoked { color: #f87171; }
+    .sm-btn { background: #334155; color: #e2e8f0; border: 0; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .sm-btn.active { background: #2563eb; color: #fff; }
+    .sm-btn.danger { background: #7f1d1d; }
+
+    /* 布局编辑（2D 俯视） */
+    #layoutSvg { display: block; margin-left:auto; margin-right:auto; background: #0b1220; border-radius: 10px; touch-action: none; }
+    .layout-canvas { flex: 2 1 460px; min-width: 300px; min-height: 0; overflow: auto; background: #0b1220; border: none; outline: none; box-shadow: none; border-radius: 10px; position: relative; }
+    #layoutGridLegend { position:absolute; bottom:12px; left:12px; z-index:4; max-width:calc(100% - 24px); box-sizing:border-box; padding:7px 10px; border:1px solid var(--border-strong); border-radius:7px; background:rgba(15,23,42,.94); color:#cbd5e1; font-size:12px; line-height:1.5; pointer-events:none; }
+
+    /* —— 布局编辑器人性化样式 —— */
+    /* 顶部可折叠操作指引 */
+    .lay-help { background: rgba(15,23,42,.4); border: 1px solid var(--border-soft); border-radius: 12px; padding: 4px 12px; margin-bottom: 8px; }
+    .lay-help > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; padding: 6px 2px; font-size: 13.5px; font-weight: 600; color: var(--text); user-select: none; }
+    .lay-help > summary::-webkit-details-marker { display: none; }
+    .lay-help > summary::before { content: "▾"; color: var(--muted); transition: transform .2s var(--ease); margin-right: 2px; }
+    .lay-help:not([open]) > summary::before { transform: rotate(-90deg); }
+    .lay-help .lh-ico { font-size: 15px; }
+    .lay-help-body { padding: 2px 2px 8px; }
+
+    /* 工具栏：分组 + 图标化分段按钮 */
+    .cad-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 2px 0 8px; }
+    .cad-group { display: inline-flex; gap: 2px; padding: 3px; background: rgba(15,23,42,.55); border: 1px solid var(--border); border-radius: 10px; }
+    .cad-tool { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border: 0; border-radius: 8px; background: transparent; color: var(--text-2); cursor: pointer; font-size: 13px; transition: background .15s var(--ease), color .15s var(--ease), box-shadow .15s var(--ease); }
+    .cad-tool .ct-ico { font-size: 14px; line-height: 1; }
+    .cad-tool:hover { background: rgba(99,102,241,.12); color: var(--text); }
+    .cad-tool.active { background: var(--primary); color: #fff; box-shadow: 0 2px 10px rgba(37,99,235,.4); }
+    .cad-tool.toggle.active { background: rgba(45,111,219,.28); color: #bfdbfe; box-shadow: inset 0 0 0 1px rgba(59,130,246,.5); }
+    .cad-tool:not(.active) { opacity: .82; }
+    .cad-status { font-size: 12.5px; color: #7dd3fc; margin-left: 4px; }
+    .cad-coord { font-size: 12.5px; color: #94a3b8; margin-left: auto; font-variant-numeric: tabular-nums; }
+
+    /* 画布浮层：门/窗激活提示 + 空状态 + 选中操作提示 */
+    .canvas-hint { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 6; pointer-events: none; padding: 7px 14px; border-radius: 999px; font-size: 13px; color: #fff; background: rgba(217,119,6,.92); box-shadow: 0 4px 16px rgba(217,119,6,.4); animation: hintIn .2s var(--ease); }
+    .canvas-hint.hidden { display: none; }
+    .layout-empty { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; pointer-events: none; text-align: center; padding: 20px; }
+    .layout-empty.hidden { display: none; }
+    .layout-empty .le-ico { font-size: 40px; opacity: .9; }
+    .layout-empty .le-title { font-size: 15px; font-weight: 700; color: var(--text); }
+    .layout-empty .le-sub { font-size: 13px; color: var(--muted); max-width: 280px; line-height: 1.6; }
+    .sel-hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 6; pointer-events: none; padding: 6px 13px; border-radius: 999px; font-size: 12px; color: #cbd5e1; background: rgba(13,20,38,.78); border: 1px solid var(--border-soft); backdrop-filter: blur(6px); }
+    .sel-hint.hidden { display: none; }
+    @keyframes hintIn { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+    /* 底部操作区：导出/导入次要，保存为主按钮 */
+    .lay-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; justify-content: space-between; flex-wrap: wrap; }
+    .lay-acts-left, .lay-acts-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .lay-acts-right { margin-left: auto; }
+    #layoutModal .lay-actions button { flex: 0 0 auto; white-space: nowrap; }
+    .lay-actions .btn-sec { background: #334155; color: #e2e8f0; border: 0; padding: 9px 13px; border-radius: 9px; cursor: pointer; font-size: 13px; transition: filter .15s, transform .05s; }
+    .lay-actions .btn-sec:hover { filter: brightness(1.12); }
+    .lay-actions .btn-save { background: #16a34a; color: #fff; border: 0; padding: 10px 18px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 700; box-shadow: 0 2px 10px rgba(22,163,74,.35); transition: filter .15s, box-shadow .2s; }
+    .lay-actions .btn-save:hover { filter: brightness(1.08); }
+    .lay-actions .btn-save.dirty { animation: savePulse 1.4s ease-in-out infinite; }
+    .lay-actions .btn-close { background: #475569; color: #e2e8f0; border: 0; padding: 10px 16px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+    .lay-actions .btn-close:hover { filter: brightness(1.12); }
+    .dirty-dot { font-size: 12px; color: #fca5a5; background: rgba(127,29,29,.25); border: 1px solid rgba(248,113,113,.4); padding: 3px 9px; border-radius: 999px; }
+    .dirty-dot.hidden { display: none; }
+    @keyframes savePulse { 0%,100% { box-shadow: 0 2px 10px rgba(22,163,74,.35); } 50% { box-shadow: 0 2px 18px rgba(34,197,94,.8); } }
+    .layout-row { background: #0b1220; border-radius: 12px; padding: 10px; display: flex; flex-wrap: nowrap; align-items: stretch; min-height: 0; }
+    .layout-row.properties-hidden .layout-list-wrap { display:none; }
+    .layout-row.properties-hidden .layout-canvas { margin-right:0; }
+    .layout-canvas { margin-right: 10px; }
+    .layout-canvas svg { cursor: default; }
+    .layout-list-wrap { flex: 0 1 340px; min-width: 240px; max-width: 380px; display: flex; flex-direction: column; min-height: 0; overflow: hidden auto; }
+    /* ⚠️ 关键：分区面板禁止被 flex 压缩。
+       侧栏是 flex 列容器，空间不足时 .sec-panel 会被 flex-shrink 压到比标题栏还矮，
+       而 .sec-panel 有 overflow:hidden，于是「门窗 / 货架」标题栏被直接裁掉一半——
+       表现就是收起时只剩一条扁条、文字贴底。设为 0 0 auto 后标题栏永远完整显示，
+       内容超出改由侧栏自身滚动。 */
+    .layout-list-wrap > .sec-panel { flex: 0 0 auto; }
+    /* 货架分区例外：吃掉侧栏剩余高度，让货架列表在自己内部滚动，
+       而不是把面板撑到几千 px、带着整个侧栏一起滚（连门窗标题栏都会被滚出视野）。
+       头/体分离 + min-height:0，保证再挤也不会把标题栏压没。 */
+    /* ⚠️ 必须给显式 min-height：按 CSS 规范，flex 项只要 overflow 不是 visible，
+       自动最小尺寸(min-height:auto)就等于 0，而 .sec-panel 是 overflow:hidden——
+       所以写 min-height:auto 无效，门窗一展开货架面板就会被压成一条 2px 的缝。
+       46px = 标题栏 43px(9+25+9) + 余量，保证再挤也至少剩下完整标题栏可点。 */
+    .layout-list-wrap > #secRack { flex: 1 1 auto; min-height: 46px; display: flex; flex-direction: column; }
+    #secRack > .sec-head { flex: 0 0 auto; }
+    #secRack > .sec-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+    .layout-list-wrap .layoutList { min-height: 0; max-height: none; overflow: visible; }
+    /* 布局编辑弹窗：接近全屏；画布用 flex 吃掉剩余高度（不再写死 vh，各种屏幕都自适应） */
+    .layout-box { width: min(1440px, 98vw); height: 98vh; max-height: 98vh; display: flex; flex-direction: column; padding: 18px 20px; border: none; box-shadow: none; background: var(--surface); overflow: hidden auto; }
+    /* 给画布区一个下限，避免 SVG 越高→行被挤越矮→画布越小的反向锁死 */
+    .layout-box .layout-row { flex: 1 1 auto; min-height: 260px; }
+    @media (max-width: 880px) {
+      .layout-box { height: 94vh; max-height: 94vh; overflow: hidden; }
+      .layout-box > :not(.layout-row) { flex-shrink: 0; }
+      .layout-box .layout-row { display: block; flex: 1 1 auto; min-height: 140px; overflow-y: auto; }
+      .layout-canvas { height: 40vh; min-height: 260px; min-width: 0; margin-right: 0; }
+      .layout-list-wrap { display: block; max-width: none; min-width: 0; overflow: visible; margin-top: 10px; }
+      #secRack > .sec-body { overflow: visible; }
+      .layout-box .lay-actions { gap: 6px; margin-top: 6px; }
+      .layout-box .lay-acts-left, .layout-box .lay-acts-right { gap: 6px; }
+    }
+    .zoombtn { width: 30px; height: 28px; padding: 0; border: 1px solid #334155; border-radius: 7px; background: #111827; color: #e2e8f0; font-size: 15px; line-height: 1; cursor: pointer; }
+    #layoutZoomFit { width: auto; min-width: 48px; padding: 0 8px; white-space: nowrap; }
+    .zoombtn:hover { background: #1e293b; }
+    #layoutSvg .knob-link { stroke: #3b82f6; stroke-width: 1.5; stroke-dasharray: 3 3; pointer-events: none; }
+    #layoutSvg .knob.hide, #layoutSvg .knob-link.hide, #layoutSvg .drag-tip.hide, #layoutSvg .furn-label.hide { display: none; }
+    #layoutSvg .room { fill: rgba(148,163,184,.1); stroke: none; }
+    #layoutSvg .wall { stroke: #0b1220; stroke-width: 1; }
+    #openingSvg .room { fill: rgba(148,163,184,.1); stroke: none; }
+    #openingSvg .op-wall { stroke: #64748b; stroke-width: 2; }
+    #layoutSvg .furn { fill: rgba(185,138,94,.32); stroke: #b98a5e; stroke-width: 2; cursor: grab; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); transition: filter .12s; }
+    #layoutSvg .furn.open { fill: rgba(201,160,106,.18); stroke: #d4a373; stroke-dasharray: 4 3; }
+    #layoutSvg .furn:hover { filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); stroke: #d4a373; }
+    #layoutSvg .furn.sel { fill: rgba(45,111,219,.42); stroke: #3b82f6; stroke-width: 2.5; }
+    #layoutSvg .furn-div { stroke: rgba(138,106,69,.5); stroke-width: 1; }
+    #layoutSvg .furn-div, #layoutSvg .furn-label { pointer-events:none; }
+    #layoutSvg .furn-div.open { stroke: #a9743f; stroke-width: 1.4; }
+    #layoutSvg .furn.dragging { cursor: grabbing; fill: rgba(45,111,219,.55); stroke: #60a5fa; }
+    #layoutSvg text { pointer-events: none; user-select: none; }
+    #layoutSvg .knob { fill: #3b82f6; stroke: #dbeafe; stroke-width: 1.5; cursor: grab; }
+    #layoutSvg .knob:hover { fill: #60a5fa; }
+    #layoutSvg .drag-tip { font-size: 11px; fill: #fde68a; pointer-events: none; }
+    /* 拖拽导入 CAD/IFC/JSON 布局时的全屏覆盖提示 */
+    #dropOverlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center;
+      background: rgba(15,23,42,.72); color: #e0f2fe; pointer-events: none; }
+    #dropOverlay .box { padding: 30px 46px; border: 2px dashed #7dd3fc; border-radius: 18px; background: rgba(2,6,23,.5);
+      font-size: 20px; font-weight: 600; text-align: center; line-height: 1.6; }
+    #dropOverlay .sub { font-size: 13px; font-weight: 400; color: #bae6fd; margin-top: 6px; }
+    #dropOverlay.hidden { display: none; }
+    .layoutList { list-style: none; padding: 0; margin: 4px 0 0; overflow-y: auto; }
+    .layoutList li { display: flex; flex-direction: column; gap: 3px; padding: 5px 0; border-bottom: 1px solid var(--border-soft); font-size: 12px; color: var(--text-2); }
+    .layoutList li.sel { background: rgba(45,111,219,.12); }
+    .layoutList li .ll-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .layoutList li .ll-head > span:first-child { line-height: 1.25; }
+    .layoutList li .ll-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 4px; align-items: center; }
+    .layoutList li .ll-row label { display: flex; flex-direction: column; gap: 1px; font-size: 11px; color: var(--muted); }
+    .layoutList input { width: 100%; padding: 3px 3px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 12px; }
+    .layoutList .mini { padding: 3px 4px; font-size: 11px; border: 0; border-radius: 5px; background: var(--surface-3); color: var(--text); cursor: pointer; }
+    .layoutList .mini.rot90 { background: #3b4a63; }
+    .layoutList .mini.danger { background: #7f1d1d; color: #fecaca; }
+    .layoutList .acts { display: flex; gap: 3px; }
+    .layout-box > h3 { margin-bottom: 8px; }
+    .layout-box > .csv-tip { margin: 2px 0 6px; font-size: 11px; line-height: 1.45; }
+    .layout-box > .actions { margin-top: 10px; }
+    .layout-field { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+    .layout-field input { flex: 1; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+    /* 扫码 */
+    #scanVideo { width: 100%; border-radius: 8px; background: #000; }
+    #scanMsg { font-size: 13px; color: #fde68a; margin-top: 8px; min-height: 18px; }
+    /* 仓储概览 */
+    #overviewModal .modal-box { width: 560px; max-width: 94vw; max-height: 88vh; overflow: auto; }
+    .ov-head { display: flex; gap: 14px; flex-wrap: wrap; margin: 6px 0 14px; }
+    .ov-card { flex: 1; min-width: 120px; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 14px; }
+    .ov-card .n { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .ov-card .l { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .ov-section { margin: 14px 0 6px; font-size: 13px; color: var(--text-2); font-weight: 600; }
+    .ov-bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+    .ov-bar-row .name { width: 96px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ov-bar-track { flex: 1; height: 14px; background: var(--surface-3); border-radius: 7px; overflow: hidden; }
+    .ov-bar-fill { height: 100%; background: linear-gradient(90deg,#38bdf8,#6366f1); border-radius: 7px; }
+    .ov-bar-row .val { width: 56px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .ov-furn { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+    .ov-furn .nm { width: 140px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ov-furn .track { flex: 1; height: 12px; background: var(--surface-3); border-radius: 6px; overflow: hidden; }
+
+    /* 布局编辑器：选中货架后在右侧跳出的编辑面板 */
+    .furn-sel-panel { background: linear-gradient(135deg, rgba(99,102,241,.14), rgba(15,23,42,.22)); border: 1px solid rgba(99,102,241,.35); border-radius: 12px; margin-bottom: 10px; box-shadow: var(--shadow-sm); overflow: hidden; }
+    .furn-sel-panel.hidden { display: none; }
+    /* 折叠头：始终可见 */
+    .furn-sel-panel .fp-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; user-select: none; transition: background .15s; }
+    .furn-sel-panel .fp-head:hover { background: rgba(99,102,241,.1); }
+    .furn-sel-panel .fp-head .fp-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-2); transition: transform .25s var(--ease); }
+    .furn-sel-panel.collapsed .fp-head .fp-chevron { transform: rotate(-90deg); }
+    .furn-sel-panel .fp-head .fp-title { font-size: 13px; font-weight: 600; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .furn-sel-panel .fp-head .fp-code { font-family: ui-monospace, monospace; font-size: 11px; color: #a5b4fc; background: rgba(99,102,241,.16); padding: 1px 7px; border-radius: 999px; border: 1px solid rgba(139,92,246,.4); flex-shrink: 0; }
+    .furn-sel-panel .fp-head .fp-toggle-hint { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    /* 可折叠体：展开时显示，收起时隐藏 */
+    .furn-sel-panel .fp-body { padding: 0 12px 12px; display: block; overflow: hidden; opacity: 1; transition: max-height .28s var(--ease), opacity .2s var(--ease), padding .28s var(--ease); }
+    .furn-sel-panel.collapsed .fp-body { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+    .furn-sel-panel .fp-hint { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+    .furn-sel-panel .fp-row { display: flex; gap: 6px; margin: 7px 0; align-items: center; }
+    .furn-sel-panel .fp-row > label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .furn-sel-panel .fp-row input, .furn-sel-panel .fp-row select { flex: 1; min-width: 0; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; width: 100%; box-sizing: border-box; }
+    .furn-sel-panel .fp-row input:focus, .furn-sel-panel .fp-row select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.18); }
+    .furn-sel-panel .fp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
+    .furn-sel-panel .fp-grid label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+    .furn-sel-panel .fp-grid input { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 13px; outline: none; transition: border-color .15s, box-shadow .15s; width: 100%; box-sizing: border-box; }
+    .furn-sel-panel .fp-grid input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.18); }
+    .furn-sel-panel .fp-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .furn-sel-panel .fp-actions button { flex: 1; min-width: 0; padding: 9px 8px; border: 0; border-radius: 9px; cursor: pointer; font-size: 12.5px; font-weight: 600; transition: transform .12s var(--ease), filter .15s; white-space: nowrap; }
+    .furn-sel-panel .fp-actions button:hover { transform: translateY(-1px); filter: brightness(1.07); }
+    .furn-sel-panel .fp-save { background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff; box-shadow: 0 2px 10px rgba(59,130,246,.3); }
+    .furn-sel-panel .fp-clone { background: rgba(51,65,85,.8); color: #e2e8f0; }
+    .furn-sel-panel .fp-del { background: rgba(153,27,27,.75); color: #fecaca; }
+    .furn-sel-panel .fp-msg { font-size: 11.5px; margin-top: 8px; min-height: 15px; }
+    .furn-sel-panel .fp-msg.ok { color: #86efac; }
+    .furn-sel-panel .fp-msg.err { color: #fca5a5; }
+
+    /* ===== 布局编辑器右侧栏：统一的分区面板系统 ===== */
+    .sec-panel { background: rgba(15,23,42,.35); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+    .sec-panel .sec-head { display: flex; align-items: center; gap: 7px; padding: 9px 11px; cursor: pointer; user-select: none; transition: background .15s; }
+    .sec-panel .sec-head:hover { background: rgba(99,102,241,.07); }
+    .sec-panel .sec-head .sec-ch { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-2); transition: transform .28s var(--ease), color .15s; }
+    .sec-panel.collapsed .sec-ch { transform: rotate(-90deg); }
+    .sec-panel .sec-head .sec-ti { font-size: 13px; font-weight: 600; flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sec-panel .sec-head .sec-ti svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .sec-panel .sec-head .sec-badge { font-size: 11px; color: #cbd5e1; background: rgba(51,65,85,.7); padding: 1px 7px; border-radius: 999px; flex-shrink: 0; }
+    .sec-panel .sec-head .sec-hint { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    .sec-panel .sec-body { padding: 0 11px 10px; overflow: hidden; opacity: 1; transition: max-height .28s var(--ease), opacity .2s var(--ease), padding .28s var(--ease); }
+    .sec-panel.collapsed .sec-body { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+    .sec-panel .sec-head:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+    .sec-panel .sec-head:hover .sec-ch { color: #a5b4fc; }
+    .sec-panel.collapsed .sec-head .sec-hint { color: #a5b4fc; }
+    .sec-panel .sec-tip { font-size: 11px; color: var(--muted); margin-bottom: 6px; line-height: 1.45; }
+
+    /* 门窗/货架列表共用：内部列表容器 */
+    .sec-panel .sec-list { max-height: 176px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 4px; }
+    .sec-panel .sec-list::-webkit-scrollbar { width: 5px; }
+    .sec-panel .sec-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    /* 门/窗列表行：之前整行靠内联样式、删除按钮 .mini 又只被 `.layoutList .mini` 命中（这里根本没样式），挤成一团 */
+    .op-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: background .14s, box-shadow .14s; }
+    .op-row + .op-row { margin-top: 2px; }
+    .op-row:hover { background: rgba(148,163,184,.10); }
+    .op-row.op-sel { background: rgba(99,102,241,.16); box-shadow: inset 0 0 0 1px rgba(129,140,248,.55); }
+    .op-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+    .op-name { font-size: 12.5px; font-weight: 600; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .op-side { font-size: 12px; color: #cbd5e1; flex-shrink: 0; width: 32px; }
+    /* 沿墙位置：小轨道 + 圆点代替纯文字「沿墙 62%」，一眼看出靠哪一边 */
+    .op-pos { position: relative; width: 40px; height: 6px; border-radius: 3px; background: var(--surface-3); flex-shrink: 0; }
+    .op-pos i { position: absolute; top: -2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: #94a3b8; box-shadow: 0 0 0 2px rgba(15,23,42,.85); }
+    .op-row.op-sel .op-pos i { background: #a5b4fc; }
+    .op-pct { font-size: 11.5px; color: var(--muted); width: 32px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    /* 删除按钮：给足 26×26 命中区，hover 变红，不再是一个没样式的原生小 ✕ */
+    .op-del { width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-3); color: var(--text-2); font-size: 12px; line-height: 1; cursor: pointer; padding: 0; transition: background .14s, color .14s, border-color .14s; }
+    .op-del:hover { background: #7f1d1d; color: #fecaca; border-color: #b91c1c; }
+    /* 镜像开门方向（仅单开门显示）：开启时用蓝色高亮，一眼看出这扇门是镜像过的 */
+    .op-flip { width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 7px; background: var(--surface-3); color: var(--text-2); font-size: 13px; line-height: 1; cursor: pointer; padding: 0; transition: background .14s, color .14s, border-color .14s; }
+    .op-flip:hover { background: rgba(99,102,241,.22); color: #c7d2fe; border-color: #6366f1; }
+    .op-flip.on { background: rgba(99,102,241,.34); color: #e0e7ff; border-color: #818cf8; }
+    .op-empty { color: var(--muted); font-size: 12px; line-height: 1.55; padding: 8px 6px; }
+
+    .ov-furn .fill { height: 100%; background: linear-gradient(90deg,#34d399,#10b981); border-radius: 6px; }
+    .ov-furn .meta { flex:0 1 210px; text-align:right; color:var(--muted); font-size:12px; }
+    .ov-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+    /* 首屏加载遮罩：z-index 低于登录遮罩(9999)，未登录时登录表单始终在上层 */
+    /* 默认透明：本地热加载只需 ~0.6s，立刻显示会闪一下反而更糟。
+       JS 等 280ms 还没加载完才加 .show 淡入；加载完加 .hidden 淡出。 */
+    #bootMask { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(130% 100% at 50% -12%, #111c38 0%, var(--bg) 58%);
+      opacity: 0; pointer-events: none; transition: opacity .25s var(--ease); }
+    #bootMask.show { opacity: 1; pointer-events: auto; }
+    #bootMask.hidden { opacity: 0; pointer-events: none; }
+    #bootMask .bm-box { display: flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: var(--radius);
+      background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); color: var(--text-2); font-size: 13px; }
+    #bootMask .bm-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border-strong);
+      border-top-color: var(--primary); animation: bmspin .8s linear infinite; }
+    @keyframes bmspin { to { transform: rotate(360deg); } }
+
+    /* 登录遮罩 */
+    .lm-mask { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center;
+      background: rgba(11,17,32,.94); backdrop-filter: blur(6px); }
+    .lm-box { width: 340px; max-width: 92vw; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 26px; box-shadow: var(--shadow); }
+    .lm-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .lm-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+    .lm-input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); margin-bottom: 10px; box-sizing: border-box; outline: none; transition: border-color .15s, box-shadow .15s; }
+    .lm-input:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    .lm-err { color: #f87171; font-size: 12px; min-height: 16px; margin: 8px 0 2px; }
+    .lm-btn { width: 100%; padding: 11px; border-radius: 10px; border: 0; background: var(--primary-2); color: #fff; font-weight: 600; cursor: pointer; font-size: 14px; transition: background .15s; }
+    .lm-btn:hover { background: #1d4ed8; }
+    .lm-bs { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .lm-bs-tip { font-size: 12px; color: var(--warn); margin-bottom: 8px; }
+    .lm-bs-input { width: 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); margin-bottom: 8px; box-sizing: border-box; outline: none; }
+    .lm-bs-btn { width: 100%; padding: 9px; border-radius: 8px; border: 1px solid var(--warn); background: #451a03; color: var(--warn); cursor: pointer; font-size: 13px; }
+
+    /* 移动端 */
+    @media (max-width: 880px) {
+      #topbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; padding: 8px 10px; gap: 6px; }
+      #topbar::-webkit-scrollbar { height: 4px; }
+      #topbar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+      #topbar .title { display: none; }
+      #searchInput { max-width: 160px; flex: 1 1 120px; }
+    }
+    @media (max-width: 720px) {
+      #app { flex-direction: column; }
+      #sidebar { flex: 0 0 auto; max-height: 42vh; border-left: 0; border-top: 1px solid var(--border-soft); }
+      .modal-box { width: 96vw; padding: 16px; }
+      /* 小屏下表格横向滚动，避免出入库记录/概览等宽表撑破弹窗 */
+      #sidebar table, .modal-box table, #ioBody { display: block; overflow-x: auto; white-space: nowrap; max-width: 92vw; }
+      #legend { font-size: 11px; gap: 6px; }
+      #searchScope { font-size: 12px; }
+      #scene { min-height: 50vh; }
+    }
+
+    /* ===== 交互式使用引导 tour ===== */
+    #tourSpot {
+      position: fixed; border-radius: 12px; pointer-events: none; display: none; z-index: 9501;
+      background: transparent;
+      box-shadow: 0 0 0 4px rgba(56,189,248,.6), 0 0 0 9999px rgba(8,12,22,.78);
+      transition: left .2s ease, top .2s ease, width .2s ease, height .2s ease;
+    }
+    #tourSpot.on { display: block; }
+    #tourCatch { position: fixed; inset: 0; z-index: 9500; display: none; }
+    #tourCatch.on { display: block; }
+    #tourTip {
+      position: fixed; z-index: 9502; width: min(340px, 88vw); display: none;
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: var(--shadow); padding: 16px; color: var(--text);
+    }
+    #tourTip.on { display: block; }
+    #tourTip.no-target { left: 50% !important; top: 50% !important; transform: translate(-50%,-50%); }
+    #tourTip h4 { margin: 0 0 6px; font-size: 15px; color: #7dd3fc; }
+    #tourTip p { margin: 0; font-size: 13.5px; line-height: 1.65; color: var(--text-2); }
+    #tourTip .tstep { font-size: 11px; color: var(--muted); margin-bottom: 8px; letter-spacing: .4px; }
+    #tourTip .tactions { display: flex; gap: 8px; align-items: center; margin-top: 14px; }
+    #tourTip .tactions .grow { flex: 1; }
+    .tour-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--border); margin-right: 5px; vertical-align: middle; transition: background .2s; }
+    .tour-dot.cur { background: #38bdf8; }
+
+    /* 3D 视角快速切换：右上角毛玻璃图标控件，绝对定位于 #scene 内（不随顶栏横滑） */
+    /* 视角立方体控件（右上角）：点面切换俯/正/右，按钮复位等轴 */
+    .view-gizmo { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 9px; border-radius: 16px; background: rgba(13,20,38,.66); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border-soft); box-shadow: var(--shadow-sm); cursor: grab; user-select: none; }
+    .view-gizmo.dragging, .view-gizmo.dragging * { cursor: grabbing !important; }
+    .view-gizmo:active { box-shadow: 0 6px 20px rgba(0,0,0,.45); }
+    .view-gizmo .cube { width: 56px; height: 56px; display: block; overflow: visible; cursor: pointer; filter: drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
+    .view-gizmo .face { stroke: rgba(148,163,184,.55); stroke-width: 1.2; stroke-linejoin: round; cursor: pointer; transition: fill .15s var(--ease), stroke .15s var(--ease); }
+    .view-gizmo .face-top { fill: rgba(96,165,250,.16); }
+    .view-gizmo .face-left { fill: rgba(96,165,250,.10); }
+    .view-gizmo .face-right { fill: rgba(96,165,250,.24); }
+    .view-gizmo .face:hover { fill: rgba(96,165,250,.42); stroke: rgba(191,219,254,.85); }
+    .view-gizmo .face.active { fill: rgba(99,102,241,.55); stroke: #a5b4fc; }
+    .view-gizmo .edges line { stroke: rgba(148,163,184,.45); stroke-width: 1; pointer-events: none; }
+    .view-gizmo .iso-btn { width: 40px; height: 30px; border-radius: 9px; border: 1px solid transparent; background: rgba(30,41,59,.5); color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s var(--ease), color .15s var(--ease), transform .12s var(--ease), box-shadow .15s var(--ease); }
+    .view-gizmo .iso-btn svg { width: 20px; height: 20px; display: block; }
+    .view-gizmo .iso-btn:hover { background: rgba(59,130,246,.18); color: var(--text); transform: translateY(-1px); }
+    .view-gizmo .iso-btn.active { background: var(--accent-grad); color: #fff; border-color: #3b82f6; box-shadow: 0 4px 14px rgba(59,130,246,.4); }
+    @media (max-width: 720px) { .view-gizmo { top: 8px; left: 8px; padding: 7px; gap: 6px; } .view-gizmo .cube { width: 48px; height: 48px; } .view-gizmo .iso-btn { width: 36px; height: 28px; } }
+
+    /* ===== 全局精致化：层次与微动效 ===== */
+    /* 弹窗入场：轻微上浮 + 缩放，更有质感 */
+    .modal:not(.hidden) .modal-box, .modal:not(.hidden) .modal-card, .cellModal:not(.hidden) .cellModal-card { animation: modalIn .2s var(--ease); }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+    .modal-box, .modal-card, .cellModal-card { transition: box-shadow .2s; }
+    /* 关闭按钮：圆形化 + 悬停底色 */
+    .modal-x { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+    .modal-x:hover { background: var(--surface-3); color: var(--text); }
+    .cellmodal-close { width: 28px; height: 28px; border-radius: 50%; transition: background .15s; }
+    .cellmodal-close:hover { background: var(--surface-3); }
+    /* 通用按钮悬停：轻微提亮 + 上浮，取代生硬 filter */
+    #topbar button:hover, .toolbtn:hover, .modal-box .actions button:hover, .btn-primary:hover, .btn-ghost:hover, .btn-danger:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    #topbar button:active, .toolbtn:active { transform: translateY(0); }
+    /* 卡片：悬停微动 + 边框提亮 */
+    .card { transition: border-color .15s, transform .12s, box-shadow .15s; }
+    .card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
+    #sidebar .item-card { transition: border-color .15s, transform .12s, box-shadow .15s; }
+    #sidebar .item-card:hover { border-color: var(--border-strong); transform: translateX(2px); box-shadow: var(--shadow-xs); }
+    /* 列表项悬停：左侧强调色条 */
+    #sidebar li:hover, ul.list li:hover { background: linear-gradient(90deg, rgba(59,130,246,.1), transparent 60%); }
+    /* 胶囊 / 标签：悬停提亮 */
+    .pill, .io-tag { transition: background .15s, filter .15s; }
+    .pill:hover { background: rgba(14,165,233,.28); }
+    /* 抽屉式弹窗（layout / photo / admin / asset）头部留白更透气 */
+    .modal-card > h3, .modal-box h3 { letter-spacing: .2px; }
+    /* 滚动条：统一深色细滚动条，去掉原生粗条割裂感 */
+    #sidebar::-webkit-scrollbar, .modal-box::-webkit-scrollbar, .modal-card::-webkit-scrollbar, .layoutList::-webkit-scrollbar, .merge-body::-webkit-scrollbar, #ioBody::-webkit-scrollbar { width: 8px; height: 8px; }
+    #sidebar::-webkit-scrollbar-thumb, .modal-box::-webkit-scrollbar-thumb, .modal-card::-webkit-scrollbar-thumb, .layoutList::-webkit-scrollbar-thumb, .merge-body::-webkit-scrollbar-thumb, #ioBody::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+    #sidebar::-webkit-scrollbar-thumb:hover, .modal-box::-webkit-scrollbar-thumb:hover, .modal-card::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  .integration-help{display:none}.integration-view .integration-help{display:block}.integration-view .local-help,.integration-view:not(.space-editor) .editor-help,.integration-view.space-editor .viewer-help{display:none}
+#spaceManagement.photos-only #spacePermission,
+    #spaceManagement.photos-only #spaceFilterDetails,
+    #spaceManagement.photos-only #spaceCellForm,
+    #spaceManagement.photos-only .modal-box > details:not(#spacePhotoDetails),
+    #spaceManagement.photos-only #spaceSave { display:none; }
+    </style>
+<style>#inventoryFilters input{width:145px;padding:6px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#e2e8f0}.inventory-hit{display:block;margin-top:5px;text-align:left;max-width:100%}.integration-view #searchMsg{left:104px;max-height:35vh;overflow:auto;pointer-events:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);text-shadow:none}.integration-view #searchMsg:empty{display:none}.inventory-hit{width:100%;padding:9px 10px;border:1px solid var(--border-strong);border-radius:8px;background:var(--surface-2);color:var(--text);cursor:pointer}.inventory-hit:hover{background:var(--surface-3)}</style>
+  <script src="../../../runtime.js"></script>
+  <script src="./request-bridge.js"></script>
+  <script src="./random-id.js"></script>
+  <script src="./counter-write.js"></script>
+  <script src="./business-fields.js"></script>
+  <script src="./platform-bridge.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three.module.js",
+      "three/addons/": "./vendor/jsm/"
+    }
+  }
+  </script>
+  <script src="./vendor/jsQR.js"></script>
+  <script src="./vendor/xlsx.full.min.js"></script>
+<style>
+.integration-view #topbar .tb-group:has(#searchInput){min-width:0;max-width:100%!important;flex-wrap:wrap;flex:1 1 390px!important}
+.integration-view #searchInput{min-width:80px;width:120px;flex:1 1 120px;max-width:none}
+#clearSearch{font-size:20px;line-height:1;padding:5px 9px!important}
+.external-item .inventory-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.external-item h4{font-size:15px;line-height:1.5;margin:0;overflow-wrap:anywhere}
+.inventory-status{font-size:12px;white-space:nowrap;border:1px solid #526783;border-radius:6px;padding:2px 7px;background:#25354e;color:#e2e8f0}
+.inventory-status.available{color:#a7f3d0;background:#123a33;border-color:#286353}.inventory-status.pending{color:#fde68a;background:#403316;border-color:#78622d}
+.external-item .inventory-quantity{margin:16px 0;color:#cbd5e1}.inventory-quantity strong{font-size:28px;font-weight:650;color:#f1f5f9;font-variant-numeric:tabular-nums}
+.inventory-properties{display:grid;grid-template-columns:66px minmax(0,1fr);gap:10px 8px;font-size:13px;line-height:1.5;margin:0 0 16px}.inventory-properties dt{color:#aabbd2}.inventory-properties dd{margin:0;color:#e2e8f0;overflow-wrap:anywhere}
+.business-link{width:100%;padding:9px 12px;font:inherit;font-size:13px;font-weight:600;border:1px solid #426497;border-radius:8px;background:#1e3a62;color:#dbeafe;cursor:pointer}.business-link:hover{background:#284d7e}
+.business-link:focus-visible,#clearSearch:focus-visible,.inventory-hit:focus-visible{outline:2px solid #60a5fa;outline-offset:2px}
+@media(max-width:720px){
+.integration-view #app{overflow:hidden}
+.integration-view #leftToolbar,.integration-view #leftToolbar.lt-open{flex:0 0 48px;width:100%;max-height:48px;min-height:48px;flex-direction:row;overflow:hidden;border-bottom:1px solid var(--border)}
+.integration-view #ltToggle{display:none}
+.integration-view #ltBody .lt-grp{display:none}
+.integration-view #ltBody .lt-btn .lb{display:inline}
+.integration-view #ltBody .lt-btn{gap:6px!important}
+.integration-view #ltBody{display:flex!important;flex-direction:row;align-items:center;gap:6px;overflow-x:auto;padding:5px 8px;width:100%}
+.integration-view #ltBody .lt-btn{flex:0 0 auto;width:auto;min-width:58px;margin:0;padding:6px 10px}
+.integration-view #scene{flex:1 1 auto;min-height:0}
+.integration-view #sidebar{flex:0 0 32%;max-height:32%;width:100%;padding:12px;overflow:auto}
+.integration-view #sidebar.sb-collapsed{flex-basis:0;max-height:0;padding:0;border:0}
+.integration-view .sb-toggle{top:auto;bottom:32%;right:8px;transform:none}
+.integration-view #sidebar.sb-collapsed ~ .sb-toggle{bottom:8px;right:8px}
+.integration-view #searchMsg{max-height:25vh}
+}
+</style><style>#activeInventoryFilters[hidden]{display:none!important}#activeInventoryFilters button{background:#1e3558;color:#dbeafe;border:1px solid #476083;border-radius:16px;padding:5px 10px;max-width:100%;overflow-wrap:anywhere;white-space:normal;cursor:pointer}</style>
+<style>.business-link:disabled{opacity:.65;cursor:not-allowed}.business-link-hint{font-size:12px;line-height:1.5;margin:8px 0 0}</style>
+  <link rel="stylesheet" href="./display-polish.css">
+  <link rel="stylesheet" href="./guided-tour.css">
+  <link rel="stylesheet" href="./warehouse-work.css" data-warehouse-work>
+  <link rel="stylesheet" href="./layout-workspace.css">
+</head>
+<body>
+  <!-- 首屏加载遮罩：3D 场景构建完成前给出明确反馈（实测本地需 3~4 秒，此前完全空白）。
+       z-index 低于登录遮罩，未登录时登录表单始终在上层，不会被挡。 -->
+  <div id="bootMask">
+    <div class="bm-box"><span class="bm-spin"></span><span id="bootText">正在加载 3D 场景…</span></div>
+  </div>
+
+  <!-- 企业级 P0：登录遮罩（未登录 / 会话过期 / 权限不足时弹出） -->
+  <div id="loginMask" class="lm-mask">
+    <div class="lm-box">
+      <div class="lm-title">🏢 3D可视化仓储协同平台</div>
+      <div id="loginSub" class="lm-sub">请登录以继续</div>
+      <input id="loginUser" class="lm-input" placeholder="用户名" autocomplete="username" />
+      <input id="loginPass" type="password" class="lm-input" placeholder="密码" autocomplete="current-password" />
+      <div id="loginErr" class="lm-err"></div>
+      <button id="loginBtn" class="lm-btn">登 录</button>
+      <div id="loginBootstrap" class="lm-bs" style="display:none">
+        <div class="lm-bs-tip">系统尚未初始化，请创建首个管理员</div>
+        <input id="bsName" class="lm-bs-input" placeholder="姓名（如：仓库主管）" />
+        <button id="bootstrapBtn" class="lm-bs-btn">创建管理员（密码至少 8 位）</button>
+      </div>
+    </div>
+  </div>
+  <div id="app">
+    <!-- 左侧垂直工具栏：从顶栏迁移的操作型按钮，支持展开/收缩 -->
+    <div id="leftToolbar">
+      <button id="ltToggle" type="button" class="lt-toggle panel-toggle" title="收起工具栏" aria-label="收起工具栏" aria-controls="ltBody" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+      <div id="ltBody">
+        <section class="lt-group"><button type="button" class="lt-group-toggle" aria-expanded="true" aria-controls="lt-inventory">库存业务<span aria-hidden="true">⌄</span></button>
+          <div id="lt-inventory" class="lt-group-items">
+            <button id="openingStockBtn" class="lt-btn" title="现场实盘，按格位建立期初库存"><span class="ic">▤</span><span class="lb">首次建账</span></button>
+            <button id="workTasksBtn" class="lt-btn" title="到期盘点、未完成单据与低库存提醒"><span class="ic">☑</span><span class="lb">我的待办</span></button>
+            <button id="teamTasksBtn" class="lt-btn" title="领取、分批办理、交接与确认团队作业"><span class="ic">▣</span><span class="lb">团队任务</span></button>
+            <button id="addBtn" class="lt-btn lt-primary"><span class="ic">＋</span><span class="lb">入库</span></button>
+            <button id="ioBtn" class="lt-btn" title="入库 / 出库 / 移库"><span class="ic">📦</span><span class="lb">出入库</span></button>
+            <button id="scanBtn" class="lt-btn" title="扫码定位：扫格位/物品二维码，镜头飞过去"><span class="ic">📷</span><span class="lb">扫码定位</span></button>
+            <button id="overviewBtn" class="lt-btn" title="仓储概览：物品/格位总量、占用率、分类分布"><span class="ic">📊</span><span class="lb">概览</span></button>
+            <button id="inventoryExportBtn" class="lt-btn"><span class="ic">📤</span><span class="lb">导入 / 导出</span></button>
+            <button id="qrBtn" class="lt-btn" title="打开库位/货品二维码打印页"><span class="ic">🏷</span><span class="lb">二维码/标签</span></button>
+          </div>
+        </section>
+        <section class="lt-group"><button type="button" class="lt-group-toggle" aria-expanded="true" aria-controls="lt-space">空间编辑<span aria-hidden="true">⌄</span></button>
+          <div id="lt-space" class="lt-group-items">
+            <button id="quickBuildBtn" class="lt-btn" title="模板生成货架、格位与标签"><span class="ic">▦</span><span class="lb">快速建仓</span></button>
+            <button id="layoutBtn" class="lt-btn" title="布局编辑"><span class="ic">📐</span><span class="lb">布局编辑</span></button>
+            <button id="spaceManageBtn" class="lt-btn" title="格位属性、现场照片及空间维护工具"><span class="ic">⚙</span><span class="lb">格位管理</span></button>
+            <button id="drag3dBtn" class="lt-btn" title="调整货架和门窗位置，保存后生效"><span class="ic">🖐</span><span class="lb">3D 位置调整</span></button>
+            <button id="mergeBtn" class="lt-btn" title="合并格位：相邻列合成宽格位"><span class="ic">🧩</span><span class="lb">合并格位</span></button>
+            <button id="assetBtn" class="lt-btn" title="上传 / 管理写实模型（客户用 Blender 构建的 GLB，按库位关联）"><span class="ic">🧊</span><span class="lb">模型</span></button>
+          </div>
+        </section>
+        <section class="lt-group"><button type="button" class="lt-group-toggle" aria-expanded="true" aria-controls="lt-view">视图控制<span aria-hidden="true">⌄</span></button>
+          <div id="lt-view" class="lt-group-items">
+            <button id="resetView" class="lt-btn" title="复位视角：回到默认观察位置"><span class="ic">↺</span><span class="lb">复位视角</span></button>
+            <button id="cellLabelBtn" class="lt-btn active" title="格位编号：镜头靠近时淡入显示"><span class="ic">🔢</span><span class="lb">格位编号</span></button>
+            <button id="isolateBtn" class="lt-btn" title="隔离模式：仅保留一个货架，其余隐藏"><span class="ic">🎯</span><span class="lb">单架查看</span></button>
+            <select id="isolateSel" class="lt-select hidden"></select>
+            <button id="realBtn" class="lt-btn" title="切换「写实 / 示意图」：写实模式叠加客户用 Blender 构建的 GLB 模型"><span class="ic">🎨</span><span class="lb">写实</span></button>
+          </div>
+        </section>
+      </div>
+      <div id="ltFooter">
+        <button id="mobileAccessBtn" class="lt-btn" title="手机扫码访问，或切换手机作业版"><span class="ic">▣</span><span class="lb">手机访问</span></button>
+        <a id="integrationAdminLink" class="lt-btn" href="./sync.html" hidden title="数据接入、账号权限、审计与备份"><span class="ic">⚙</span><span class="lb">管理设置</span></a>
+        <button id="adminBtn" class="lt-btn" style="display:none" title="管理设置"><span class="ic">⚙</span><span class="lb">管理设置</span></button>
+        <button id="tourBtn" class="lt-btn" title="重新观看交互式使用引导"><span class="ic">🧭</span><span class="lb">引导</span></button>
+        <button id="helpBtn" class="lt-btn" title="使用帮助与操作引导"><span class="ic">❓</span><span class="lb">帮助</span></button>
+        <button type="button" id="userChip" title="点击登出" style="display:none;align-items:center;gap:6px;background:var(--surface-3);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--text);cursor:pointer">
+          <span id="userName"></span><span id="userRole" style="color:var(--muted)"></span><span id="userActionIcon" style="color:var(--muted)">⏻</span>
+        </button>
+      </div>
+    </div>
+    <div id="scene">
+      <div id="topbar">
+        <span class="title">🏢 3D可视化仓储协同平台</span>
+        <button id="locPickerBtn" class="toolbtn loc-picker" title="切换仓库 / 库区">
+          <span id="locBreadcrumb" class="loc-breadcrumb"></span><span class="lp-caret">▾</span>
+        </button>
+
+        <div class="tb-group" style="flex:1;max-width:420px">
+          <div class="search-field"><input id="searchInput" aria-label="搜索库存关键词" placeholder="名称 / SKU / 库位" />
+          <button id="clearSearch" title="清空关键词，保留筛选条件" aria-label="清空关键词" type="button">×</button></div><button id="searchBtn" type="button" title="搜索定位" aria-label="搜索定位"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+          <select id="searchScope" title="搜索范围" style="padding:6px 8px;border-radius:999px;border:0;background:var(--surface);color:var(--text);font-size:13px">
+            <option value="all">全部</option>
+            <option value="room">当前库区</option>
+          </select>
+        </div>
+        <details id="inventoryFilters" hidden style="flex-basis:100%;font-size:13px"><summary id="inventoryFilterSummary">库存筛选</summary><div style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0">
+          <input id="filter_source" list="filter_options_source" aria-label="数据来源筛选" placeholder="来源（精确匹配）" />
+          <input id="filter_status" list="filter_options_status" aria-label="库存状态筛选" placeholder="状态（例如待检）" />
+          <input id="filter_unit" list="filter_options_unit" aria-label="库存单位筛选" placeholder="单位（例如套）" />
+          <input id="filter_batch_no" aria-label="库存批次筛选" placeholder="批次（精确匹配）" />
+          <button id="clearInventoryFilters" title="清空关键词、筛选条件并恢复全部库区范围">清除全部条件</button>
+          <datalist id="filter_options_source"></datalist><datalist id="filter_options_status"></datalist><datalist id="filter_options_unit"></datalist>
+          <span id="filterOptionsHint" style="flex-basis:100%;color:var(--muted)"></span>
+        </div></details>
+        <div id="activeInventoryFilters" hidden aria-label="当前生效的库存筛选" style="flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div id="viewBar" class="view-gizmo" title="点击立方体面切换视角：上=俯视，左=正视，右=右视">
+        <svg class="cube" viewBox="0 0 64 64" aria-label="视角立方体">
+          <polygon class="face face-top" data-view="top" points="32,6 56,20 32,34 8,20"></polygon>
+          <polygon class="face face-left" data-view="front" points="8,20 32,34 32,58 8,44"></polygon>
+          <polygon class="face face-right" data-view="right" points="32,34 56,20 56,44 32,58"></polygon>
+          <g class="edges">
+            <line x1="32" y1="6" x2="32" y2="34"></line>
+            <line x1="8" y1="20" x2="8" y2="44"></line>
+            <line x1="56" y1="20" x2="56" y2="44"></line>
+            <line x1="8" y1="20" x2="32" y2="34"></line>
+            <line x1="56" y1="20" x2="32" y2="34"></line>
+            <line x1="8" y1="44" x2="32" y2="58"></line>
+            <line x1="56" y1="44" x2="32" y2="58"></line>
+            <line x1="32" y1="34" x2="32" y2="58"></line>
+          </g>
+        </svg>
+        <button class="iso-btn" data-view="iso" title="等轴（默认 3D 视角 / 复位全貌）">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 20 7.5v9L12 21 4 16.5v-9z"/><path d="M12 3v9M20 7.5 12 12 4 7.5M12 12v9"/></svg>
+        </button>
+      </div>
+      <div id="searchMsg" role="status" aria-live="polite"></div>
+      <div id="legend">
+        <span><i style="background:#d9d9d9"></i>空</span>
+        <span title="多个SKU混放、缺少包装尺寸或SKU容量标准"><i style="background:#60a5fa"></i>待确认</span>
+        <span><i style="background:#9ed99a"></i>余量充足</span>
+        <span><i style="background:#f2c14e"></i>接近满</span>
+        <span><i style="background:#e2574c"></i>满</span>
+        <span style="opacity:.85">· 双击货架顶部圆牌可改名</span>
+      </div>
+    </div>
+    <div id="sidebar"></div>
+    <button id="sbToggle" type="button" class="sb-toggle panel-toggle" title="收起库存详情" aria-label="收起库存详情" aria-controls="sidebar" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+
+  <!-- 录入 / 编辑弹窗 -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="f_title">录入物品</h3>
+      <label>物品名称 *<input id="f_name" placeholder="如：充电线" /></label>
+      <label>SKU / 编码（选填，与已有货品相同则自动合并库存）<input id="f_sku" placeholder="如：SKU-001" /></label>
+      <label>类别<input id="f_cat" placeholder="如：数码 / 衣物" /></label>
+      <label>数量<input id="f_qty" type="number" value="1" min="0" step="any" /></label>
+      <label>库存单位<input id="f_unit" maxlength="20" placeholder="新货品默认件；已有SKU留空沿用原单位" /></label>
+      <label>位置（格位）*<select id="f_loc"></select></label>
+      <div id="f_nocell" class="nocell-hint hidden">
+        <span>当前库区还没有货架，所以没有可选格位。</span>
+        <button id="f_addFurn" type="button">＋ 添加货架</button>
+      </div>
+      <label>备注<input id="f_note" placeholder="如：批次 / 规格" /></label>
+      <label>照片（手机拍照或选图）<input id="f_photo" type="file" accept="image/*" capture="environment" /></label>
+      <img id="f_preview" class="preview hidden" />
+      <div id="f_msg" class="msg"></div>
+      <button id="f_retry" class="hidden">核对上次录入结果</button>
+      <div class="actions">
+        <button id="f_cancel">取消</button>
+        <button id="f_save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使用帮助 / 三步上手 -->
+  <div id="helpModal" class="modal hidden">
+    <div class="modal-box" style="width:min(540px,94vw)">
+      <h3>使用帮助</h3>
+      <div class="local-help">
+        <ol class="help-steps">
+          <li><b>设置空间</b>：顶部选择仓库和库区，在「库区设置」填写尺寸；左侧「布局编辑」设置货架。</li>
+          <li><b>录入库存</b>：点击3D格位，在右侧「入库」填写货品SKU、名称、单位和实际数量。有库存后可出库、移库。</li>
+          <li><b>查询与盘点</b>：按名称或SKU搜索，选格后查看库存流水；「盘点此格位」先保存实盘，核对差异后确认调账。</li>
+        </ol>
+        <p class="help-note">填写格位SKU不会增加数量。库存操作需要相应权限；看不到按钮时请联系管理员授权。</p>
+      </div>
+      <div class="integration-help">
+        <ol class="help-steps">
+          <li><b>查库存</b>：选择库区，输入名称、SKU 或格位编码，点击放大镜搜索按钮。</li>
+          <li><b>看详情</b>：点击搜索结果或 3D 格位，在右侧查看数量、批次和来源。</li>
+          <li class="editor-help"><b>改空间</b>：左侧「布局编辑」调整货架，「格位管理」修改格位属性。</li>
+        </ol>
+        <p class="help-note">库存由 ERP/WMS 管理。数据有疑问时，查看底部「来源详情」。</p>
+        <p class="viewer-help help-note">当前为只读权限，空间修改请联系管理员。</p>
+      </div>
+      <div class="actions">
+        <button id="helpTourBtn" class="btn-ghost">开始操作引导</button>
+        <button id="helpClose" class="btn-primary">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用确认弹窗（替换原生 confirm） -->
+  <dialog id="confirmModal" class="modal hidden" aria-labelledby="confirmTitle" aria-describedby="confirmMsg">
+    <div class="modal-box" style="width:min(420px,92vw)">
+      <h3 id="confirmTitle">请确认</h3>
+      <p id="confirmMsg" style="font-size:14px;color:var(--text-2);line-height:1.6;white-space:pre-wrap;margin:8px 0 0"></p>
+      <div class="actions">
+        <button id="confirmCancel" class="btn-ghost">取消</button>
+        <button id="confirmOk" class="btn-primary">确定</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 通用输入弹窗（替换原生 window.prompt，移动端友好） -->
+  <div id="inputModal" class="modal hidden">
+    <div class="modal-box" style="width:min(420px,92vw)">
+      <h3 id="inputTitle">请输入</h3>
+      <div id="inputFields"></div>
+      <div class="actions">
+        <button id="inputCancel" class="btn-ghost">取消</button>
+        <button id="inputOk" class="btn-primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量导入弹窗 -->
+  <div id="impModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>批量导入（CSV / Excel）</h3>
+      <p class="csv-tip">
+        可用列：<code>name</code>（产品名，必填）、<code>loc_code</code>（库位，必填）、<code>qty</code>（数量，可省=1）、
+        <code>rack</code>（货架，选填）、<code>sku</code>、<code>unit</code>（单位）、<code>category</code>、<code>note</code>、<code>erp_code</code>。<br>
+        库位三种写法都认：<code>WH-1-A-L01-B01</code> 全码 · <code>A-L01-B01</code> 货架+层位 · <code>L01-B01</code> 层位（此时需填 <code>rack</code> 列）。<br>
+        填写SKU时只匹配该SKU；未填SKU时使用ERP编码，两者都未填才按未编号货品名称匹配。单位留空沿用已有单位，新货品默认“件”；
+        格位里已有该产品则<b>累加数量</b>。<br>
+        任一行有问题会<b>整批不导入</b>并列出错误，改完再导一次即可。
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+        <label style="margin:0">粘贴 CSV</label>
+        <button id="imp_tpl" type="button" style="font-size:12px;padding:2px 10px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--text-2);cursor:pointer">📋 下载模板</button>
+      </div>
+      <textarea id="imp_text" rows="6" placeholder="rack,loc_code,name,qty,sku,category,note,erp_code&#10;A,A-L01-B01,包装纸箱(小),24,BX-001,纸制品,60×40cm,ERP-BX001&#10;A,L02-B03,螺丝配件包,500,SC-M6,紧固件,M6×20 平头,ERP-SC006"></textarea>
+      <label>从本机选择导入文件<input id="imp_file" type="file" accept=".csv,.xlsx,.xls,text/csv" /></label>
+      <p class="csv-tip">可在文件选择窗口中切换文件夹，选择 CSV 或 Excel 文件。</p>
+      <div id="imp_msg" class="msg"></div>
+      <button id="imp_retry" class="hidden">核对上次导入结果</button>
+      <div id="imp_err" class="msg" style="display:none;max-height:160px;overflow:auto;text-align:left;font-size:12px;line-height:1.7;white-space:pre-wrap"></div>
+      <div class="actions">
+        <button id="imp_cancel">取消</button>
+        <button id="imp_save">预览并导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加货架弹窗 -->
+  <div id="furnModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>添加货架 / 储位</h3>
+      <p class="csv-tip">参数化生成，自动按「层数 × 列数」创建格位并分配 LOC Code。</p>
+      <label>名称 *<input id="furn_name" placeholder="如：A区周转料箱" /></label>
+      <label>类型
+        <select id="furn_type">
+          <optgroup label="开放式仓储货架">
+            <option value="shelf" selected>开放式轻型货架（层板/拆零）</option>
+            <option value="rack">横梁式仓储货架（托盘/开放）</option>
+            <option value="drivein">驶入式/贯通式货架（高密度）</option>
+            <option value="shuttle">穿梭式货架（密集/半自动）</option>
+            <option value="pushback">压入式货架（后推深储）</option>
+            <option value="doubledeep">双深度货架（双排深储）</option>
+            <option value="vna">窄巷道货架（VNA）</option>
+            <option value="flow">流利式/重力式货架（FIFO 拣选）</option>
+            <option value="cantilever">悬臂式货架（长料/管材）</option>
+            <option value="mezzanine">阁楼式货架（二层平台）</option>
+            <option value="asrs">自动化立体库货架（高层）</option>
+            <option value="pegboard">挂板/孔板（工具挂架）</option>
+          </optgroup>
+          <optgroup label="封闭 / 专用存储">
+            <option value="wardrobe">封闭储物柜</option>
+            <option value="box">周转料箱（封闭）</option>
+            <option value="cabinet">抽屉式零件柜（封闭）</option>
+            <option value="mold">模具架/抽屉式（封闭）</option>
+            <option value="mesh">仓储笼/钢制料笼（封闭网）</option>
+            <option value="mobile">移动式密集架（档案/贵重）</option>
+          </optgroup>
+          <optgroup label="地面">
+            <option value="floor">地面区（贴地网格，堆地货物用）</option>
+          </optgroup>
+        </select>
+      </label>
+      <label id="lbl_w">宽(m)<input id="furn_w" type="number" value="1.2" min="0" step="any" /></label>
+      <label id="lbl_h">高(m)<input id="furn_h" type="number" value="1.8" min="0" step="any" /></label>
+      <label id="lbl_d">深(m)<input id="furn_d" type="number" value="0.4" min="0" step="any" /></label>
+      <label id="lbl_rows">层数<input id="furn_rows" type="number" value="3" min="1" max="100" /></label>
+      <label id="lbl_cols">列数<input id="furn_cols" type="number" value="4" min="1" max="100" /></label>
+      <div id="furn_msg" class="msg"></div>
+      <div class="actions">
+        <button id="furn_cancel">取消</button>
+        <button id="furn_save">生成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 货架设置弹窗 -->
+  <div id="furnSetModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>货架设置</h3>
+      <p class="csv-tip">选择货架后可改名称、类型（开放/封闭）、尺寸与层数；改「层数/列数」会按新网格重建格位（原范围内的物品自动保留）。</p>
+      <label>货架
+        <select id="furnSetSel"></select>
+      </label>
+      <label>名称<input id="furnSet_name" placeholder="如：A区开放式货架" /></label>
+      <label>类型
+        <select id="furnSet_type">
+          <optgroup label="开放式仓储货架">
+            <option value="shelf">开放式轻型货架（层板/拆零）</option>
+            <option value="rack">横梁式仓储货架（托盘/开放）</option>
+            <option value="drivein">驶入式/贯通式货架（高密度）</option>
+            <option value="shuttle">穿梭式货架（密集/半自动）</option>
+            <option value="pushback">压入式货架（后推深储）</option>
+            <option value="doubledeep">双深度货架（双排深储）</option>
+            <option value="vna">窄巷道货架（VNA）</option>
+            <option value="flow">流利式/重力式货架（FIFO 拣选）</option>
+            <option value="cantilever">悬臂式货架（长料/管材）</option>
+            <option value="mezzanine">阁楼式货架（二层平台）</option>
+            <option value="asrs">自动化立体库货架（高层）</option>
+            <option value="pegboard">挂板/孔板（工具挂架）</option>
+          </optgroup>
+          <optgroup label="封闭 / 专用存储">
+            <option value="wardrobe">封闭储物柜</option>
+            <option value="box">周转料箱（封闭）</option>
+            <option value="cabinet">抽屉式零件柜（封闭）</option>
+            <option value="mold">模具架/抽屉式（封闭）</option>
+            <option value="mesh">仓储笼/钢制料笼（封闭网）</option>
+            <option value="mobile">移动式密集架（档案/贵重）</option>
+          </optgroup>
+        </select>
+      </label>
+      <label>宽(m)<input id="furnSet_w" type="number" min="0" step="any" /></label>
+      <label>高(m)<input id="furnSet_h" type="number" min="0" step="any" /></label>
+      <label>深(m)<input id="furnSet_d" type="number" min="0" step="any" /></label>
+      <label>层数<input id="furnSet_rows" type="number" min="1" max="100" /></label>
+      <label>列数<input id="furnSet_cols" type="number" min="1" max="100" /></label>
+      <div id="furnSet_msg" class="msg"></div>
+      <div class="actions">
+        <button id="furnSet_cancel">取消</button>
+        <button id="furnSet_clone" style="background:#3b4d6b;color:#e2e8f0" title="按当前货架的规格复制出一份或多份，自动排到右侧">📋 复制</button>
+        <button id="furnSet_del" style="background:#7f1d1d;color:#fecaca">删除货架</button>
+        <button id="furnSet_save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 双击货架标牌改名 -->
+  <div id="labelModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>货架标牌改名</h3>
+      <p class="csv-tip">直接改顶部圆牌上的文字；留空则回退显示库位末段（如 A / B / C）。</p>
+      <label>名称<input id="labelInput" maxlength="24" placeholder="如：A 区货架 / 五金件" /></label>
+      <div id="label_msg" class="msg"></div>
+      <div class="actions">
+        <button id="label_cancel">取消</button>
+        <button id="label_save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 格位布局编辑：把相邻列合成宽格位 -->
+  <div id="mergeModal" class="modal hidden">
+    <div class="modal-box" style="width:min(780px,94vw)">
+      <h3>格位布局 <span id="mergeTitle" class="muted" style="font-size:13px;font-weight:400"></span></h3>
+      <p class="csv-tip">有些货品比较宽、放不进一格？把相邻列合成一个宽格位即可。合并后<b>库位编码不变</b>，已贴的二维码标签继续有效（扫到被合并的列会自动落到主格位）。</p>
+      <div class="field" style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <label for="mergeSel" style="color:#cbd5e1;font-size:13px">货架</label>
+        <select id="mergeSel" style="padding:6px 8px;border-radius:6px;border:0;background:#0f172a;color:#e2e8f0;font-size:13px"></select>
+      </div>
+      <div id="mergeBody" class="merge-body"></div>
+      <p class="csv-tip">选择目标 SKU 后核对容量；留空按已登记的包装尺寸估算。不同 SKU 不直接累加，承重请单独核对。</p>
+      <div id="merge_msg" class="msg"></div>
+      <div class="actions">
+        <button id="merge_cancel">取消</button>
+        <button id="merge_clear" class="danger">清除合并</button>
+        <button id="merge_sku" class="ghost" title="把每格的编号自动填成该格首个物品的 SKU（覆盖现有名称）">用SKU批量填充</button>
+        <button id="merge_save">保存布局</button>
+      </div>
+    </div>
+  </div>
+  <style>
+    .merge-body { max-height:52vh; overflow:auto; padding-right:4px }
+    .merge-row { display:flex; align-items:flex-start; gap:8px; margin:10px 0 }
+    .merge-row .rowTag { width:42px; color:#94a3b8; font-size:12px; flex:none; text-align:right; padding-top:8px }
+    .merge-cols { display:flex; flex:1; gap:6px; flex-wrap:wrap; align-items:center }
+    .mcell { display:flex; flex-direction:column; gap:3px; flex:1 1 66px; min-width:62px }
+    .mchip { position:relative; text-align:center; padding:10px 4px;
+             background:#1e293b; border:1px solid #334155; border-radius:8px; cursor:pointer;
+             color:#e2e8f0; font-size:12px; user-select:none; transition:background .12s }
+    .mchip:hover { background:#334155 }
+    .mchip.merged { background:#14304a; border-color:#2563eb }
+    .mchip .msplit { display:inline-block; margin-left:6px; padding:1px 6px; font-size:11px; border-radius:6px; background:#7f1d1d; color:#fff; cursor:pointer; vertical-align:middle }
+    .mchip .msplit:hover { background:#991b1b }
+    .mlink { width:18px; flex:none; text-align:center; color:#64748b; cursor:pointer; font-size:14px; user-select:none; align-self:center }
+    .mlink.on { color:#38bdf8 }
+    .mlink:hover { color:#e2e8f0 }
+    .cellName { width:100%; box-sizing:border-box; padding:4px 6px; font-size:12px;
+                background:#0f172a; border:1px solid #334155; border-radius:6px; color:#e2e8f0 }
+    .cellName:focus { border-color:#38bdf8; outline:none }
+    .merge-cap-label { display:flex;flex-direction:column;gap:4px;font-size:11px;color:#cbd5e1;margin-top:5px }
+    .merge-capacity { width:100%;box-sizing:border-box;padding:5px 6px;font-size:12px;background:#0f172a;border:1px solid #475569;border-radius:6px;color:#e2e8f0 }
+    .merge-capacity:focus { border-color:#38bdf8;outline:2px solid #38bdf844 }
+    .merge-cap-product { width:100%;min-width:0;padding:5px 6px;border:1px solid #475569;border-radius:6px;background:#0f172a;color:#e2e8f0;font-size:12px }
+    .merge-cap-hint { font-size:10px;line-height:1.5;color:#94a3b8;overflow-wrap:anywhere }
+    .cellModal { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.55); }
+    .cellModal.hidden { display: none; }
+    .cellModal-card { width: 320px; max-width: 92vw; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; color: var(--text); }
+    .cellModal-card .cm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+    .cellModal-card .cellmodal-close { background: transparent; border: 0; color: var(--text-2); font-size: 18px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 8px; }
+    .cellModal-card .cellmodal-close:hover { background: var(--surface-3); color: var(--text); }
+    #qrBox img { image-rendering: pixelated; max-width: 220px; }
+    #histBox ul { margin: 0; padding-left: 2px; list-style: none; }
+    #histBox li { padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+  </style>
+
+  <!-- 扫码定位弹窗 -->
+  <div id="scanModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>扫码定位</h3>
+      <div style="display:flex;gap:6px;margin-bottom:10px"><input id="scanCode" aria-label="仓储码" placeholder="扫码枪输入 / 库位 / SKU / 平台链接" style="flex:1;min-width:0"><button id="scan_submit">定位</button><button id="scan_camera">开启摄像头</button></div>
+      <video id="scanVideo" playsinline muted></video>
+      <div id="scanMsg">可用扫码枪输入后回车；也可手动输入，或开启摄像头扫描。</div>
+      <div class="actions">
+        <button id="scan_cancel">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 库区设置弹窗 -->
+  <div id="roomModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>库区设置</h3>
+      <p class="csv-tip">尺寸单位为米，面积按宽 × 深计算；门窗请在左侧「布局编辑」中管理。</p>
+      <label>库区名称<input id="room_name" placeholder="如：1号库区" /></label>
+      <label>库区尺寸（米）
+        <span style="display:flex;gap:10px;margin-top:6px;align-items:center">
+          <span>宽<input id="r_w" type="number" step="0.1" style="width:62px;margin-left:4px" /></span>
+          <span>深<input id="r_d" type="number" step="0.1" style="width:62px;margin-left:4px" /></span>
+          <span>高<input id="r_h" type="number" step="0.1" style="width:62px;margin-left:4px" /></span>
+        </span>
+      </label>
+      <p id="room_area" class="help-note" aria-live="polite"></p>
+      <div id="room_msg" class="msg"></div>
+      <div class="actions">
+        <button id="room_cancel">取消</button>
+        <button id="room_del" style="background:#7f1d1d;color:#fecaca">删除库区</button>
+        <button id="room_save">应用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 门窗管理弹窗（平面图可视化编辑，仿布局编辑器） -->
+
+  <!-- 仓储概览弹窗 -->
+  <div id="overviewModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>📊 仓储概览 · <span id="ov_room">当前空间</span></h3>
+      <div class="ov-head" id="ov_head"></div>
+      <div class="ov-actions"><button id="ovBatchBtn" class="ghost">🧩 批量设置格位</button></div>
+      <div class="ov-section">分类分布</div>
+      <div id="ov_cats"></div>
+      <div class="ov-section">各货架占用率</div>
+      <div id="ov_furn"></div>
+      <div class="actions" style="justify-content:flex-end;margin-top:14px">
+        <button id="ov_close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 格位批量设置 -->
+  <div id="batchModal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="modal-box" style="max-width:560px;max-height:85vh;overflow:auto">
+      <h3>🧩 批量设置格位</h3>
+      <p class="csv-tip">勾选当前库区格位，选择各字段的保持、设置或清空；设置标签会替换原标签。空间标记不控制 ERP/WMS 出入库。</p>
+      <div id="batchBox" style="max-height:46vh;overflow:auto;padding:4px 2px"></div>
+      <div style="margin-top:10px;border-top:1px solid var(--border-soft);padding-top:10px">
+        <div class="nameLine"><label>状态</label>
+          <select id="batchStatus" style="flex:1;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+            <option value="">保持原状态</option><option value="normal">正常</option><option value="locked">🔒 锁定标记</option><option value="stocktaking">📋 盘点标记</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><label for="batchCapMode">SKU容量</label><select id="batchCapMode" aria-label="容量操作"><option value="keep">保持</option><option value="set">设置</option><option value="clear">清空</option></select><input id="batchCap" aria-label="容量新值" type="number" min="0" step="1" disabled style="flex:1;min-width:100px;width:140px"></div>
+        <p class="muted">设置容量时请选择存放同一 SKU、同一单位的格位；清空会移除所选格位保存的所有 SKU 容量标准，库存数量不变。</p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><label for="batchLoadMode">承重（kg）</label><select id="batchLoadMode" aria-label="承重（kg）操作"><option value="keep">保持</option><option value="set">设置</option><option value="clear">清空</option></select><input id="batchLoad" aria-label="承重（kg）新值" type="number" min="0" step="any" disabled style="flex:1;min-width:100px;width:140px"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><label for="batchTagsMode">标签</label><select id="batchTagsMode" aria-label="标签操作"><option value="keep">保持</option><option value="set">设置</option><option value="clear">清空</option></select><input id="batchTags" aria-label="标签新值" placeholder="逗号分隔，替换原标签" disabled style="flex:1;min-width:100px;width:140px"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><label for="batchNoteMode">备注</label><select id="batchNoteMode" aria-label="备注操作"><option value="keep">保持</option><option value="set">设置</option><option value="clear">清空</option></select><input id="batchNote" aria-label="备注新值" placeholder="统一备注" disabled style="flex:1;min-width:100px;width:140px"></div>
+      </div>
+      <p id="batchSummary" role="status">已选 0 格</p>
+      <div class="actions" style="justify-content:flex-end;margin-top:12px">
+        <button id="batchCancel">取消</button>
+        <button id="batchApply" class="primary">应用到选中</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 拖拽导入 CAD/IFC/JSON 布局时的全屏覆盖提示 -->
+  <div id="dropOverlay" class="hidden"><div class="box">松开以导入 DXF / IFC / JSON 布局<span class="sub">将替换当前房间的家具布局</span></div></div>
+
+  <!-- 布局编辑弹窗（按真实场地摆放） -->
+  <div id="layoutModal" class="modal hidden">
+    <div class="modal-box layout-box">
+      <h3>📐 布局编辑 · 按真实场地摆放</h3>
+      <details class="lay-help">
+        <summary><span class="lh-ico">?</span> 操作说明与快捷键</summary>
+        <div class="lay-help-body csv-tip">
+          <b>米制 CAD 平面图</b>：带网格吸附、选中货架显示真实尺寸线、右下角实时显示光标坐标。
+          <ul class="help-steps" style="margin:6px 0 0">
+            <li>拖动货架<b>主体</b>移动；选中后拖右上角<b>蓝点</b>旋转，或用<b>方向键</b>微调（Shift 更精细）。</li>
+            <li>点击「＋ 添加」，选择门或窗，再<b>点击房间墙面</b>放置；放好后<b>拖动它沿墙移动</b>，或用<b>方向键</b>微调。</li>
+            <li><b>Ctrl + 滚轮</b>缩放、普通滚轮平移；改动后点右下「保存布局」生效。</li>
+            <li>可<b>导出 DXF</b>回 AutoCAD / FreeCAD 校对，或把 .dxf 拖进 3D 画面导入。</li>
+          </ul>
+        </div>
+      </details>
+      <div style="display:flex;gap:12px;align-items:center;margin:4px 0 6px;font-size:12px;color:#94a3b8;flex-wrap:wrap">
+        <label title="拖动时的位置步长，与画布刻度独立">移动步长
+          <select id="snapGrid" style="padding:4px 6px;border-radius:6px;border:1px solid #334155;background:#111827;color:#e2e8f0">
+            <option value="0">关闭</option>
+            <option value="0.1" selected>0.1 米</option>
+            <option value="0.5">0.5 米</option>
+          </select>
+        </label>
+        <span style="display:inline-flex;gap:6px;align-items:center">
+          <span>视图</span>
+          <button id="layoutZoomOut" class="zoombtn" title="缩小">－</button>
+          <span id="layoutZoomLbl" style="min-width:48px;text-align:center;color:#cbd5e1">100%</span>
+          <button id="layoutZoomIn" class="zoombtn" title="放大">＋</button>
+          <button id="layoutZoomFit" class="zoombtn" title="适应窗口（重置缩放）">适应</button>
+          <button id="layoutFocus" class="toolbtn" title="放大并居中所选货架，不修改布局">聚焦货架</button>
+        </span>
+        <span>所有修改先存草稿，点击「保存布局」统一生效，关闭可放弃</span>
+      </div>
+      <div class="cad-toolbar">
+        <div class="cad-group" role="group" aria-label="编辑工具">
+          <button id="cadToolSelect" class="cad-tool active" title="选择 / 拖动货架"><span class="ct-ico">⤢</span><span>选择</span></button>
+          <button id="cadToolDoor" class="cad-tool" title="点房间某面墙放置门"><span class="ct-ico">🚪</span><span>门</span></button>
+          <button id="cadToolWindow" class="cad-tool" title="点房间某面墙放置窗"><span class="ct-ico">🪟</span><span>窗</span></button>
+        </div>
+        <div class="cad-group" role="group" aria-label="显示">
+          <button id="cadGridToggle" class="cad-tool toggle active" title="切换网格显隐"><span class="ct-ico">▦</span><span>网格</span></button>
+          <button id="cadDimToggle" class="cad-tool toggle active" title="切换全部货架尺寸标注"><span class="ct-ico">📏</span><span>尺寸</span></button>
+        </div>
+        <span id="cadStatus" class="cad-status">选择 / 拖动货架</span>
+        <button id="layoutUndo" class="cad-tool" disabled title="撤销（Ctrl/Command+Z）">撤销</button>
+        <button id="layoutRedo" class="cad-tool" disabled title="重做（Ctrl/Command+Shift+Z）">重做</button>
+        <button id="layoutPropertiesToggle" class="cad-tool" aria-expanded="true">收起属性</button>
+        <span id="cadStatusCoord" class="cad-coord">X 0.00   Z 0.00 m</span>
+      </div>
+      <div class="layout-row">
+        <div class="layout-canvas">
+          <div id="layoutCanvasHint" class="canvas-hint hidden"></div>
+          <div id="layoutEmpty" class="layout-empty hidden">
+            <div class="le-ico">🗄️</div>
+            <div class="le-title">这个库区还没有货架</div>
+            <div class="le-sub">点右侧「＋ 添加货架」即可在房间内生成第一个货架 →</div>
+          </div>
+          <div id="layoutSelHint" class="sel-hint hidden">拖动货架主体移动 · 拖右上角蓝点旋转 · 方向键微调</div>
+          <svg id="layoutSvg" viewBox="0 0 400 320"></svg>
+          <div id="layoutGridLegend" aria-live="polite"></div>
+        </div>
+        <div class="layout-list-wrap">
+          <!-- 分区一：门窗（默认收起） -->
+          <div class="sec-panel collapsed" id="secOpen">
+            <div class="sec-head" id="secOpenHead" role="button" tabindex="0" aria-expanded="false">
+              <svg class="sec-ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span class="sec-ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h5v18h-5M14 3v18M3 21h11V3H3z"/><path d="M9 3v18" opacity=".5"/></svg> 门窗</span>
+              <span class="sec-badge hidden" id="secOpenCnt">0</span>
+              <span class="sec-hint">展开</span>
+            </div>
+            <div class="sec-body">
+              <div class="sec-tip">点击「＋ 添加」，选择门或窗，再点墙面放置。拖动门窗可沿墙移动，方向键可微调；门行的 <b>⇋</b> 可镜像开门方向，✕ 删除。</div>
+              <div id="cadOpeningList" class="sec-list"></div>
+            </div>
+          </div>
+          <!-- 分区二：货架（始终展开，含编辑面板+列表） -->
+          <div class="sec-panel" id="secRack">
+            <div class="sec-head" id="secRackHead" role="button" tabindex="0" aria-expanded="true">
+              <svg class="sec-ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              <span class="sec-ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 12h16M12 4v16"/></svg> 货架</span>
+              <span class="sec-badge hidden" id="secRackCnt">0</span>
+              <span class="sec-hint">收起</span>
+              <button id="layout_add_rack" class="sm-btn" title="在当前库区添加新货架">＋ 添加</button>
+            </div>
+            <div class="sec-body">
+              <div id="furnSelPanel" class="furn-sel-panel hidden"></div>
+              <details><summary>批量排列货架</summary><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0">
+                <span id="layoutArrangeCount">已选 0 架</span>
+                <select id="layoutArrangeAxis" aria-label="排列方向"><option value="x">横向 X</option><option value="z">纵向 Z</option></select>
+                <label>净间距(m) <input id="layoutArrangeGap" type="number" min="0" step="0.1" value="1" style="width:65px"></label>
+                <button id="layoutArrange" class="toolbtn">排列所选</button>
+                <small>勾选下方货架；沿所选方向排序，固定第一架并对齐。</small>
+              </div>
+              </details><ul id="layoutList" class="layoutList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="layout_msg" class="msg"></div>
+      <div class="actions lay-actions">
+        <div class="lay-acts-left">
+          <button id="layout_export" class="btn-sec" title="导出为 DXF，可在 AutoCAD / FreeCAD 打开校对">导出DXF</button>
+          <button id="layout_export_json" class="btn-sec" title="导出平台自有 JSON 模板">导出JSON</button>
+          <button id="layout_import_btn" class="btn-sec" title="导入 CAD(.dxf/.ifc) 或平台(.json) 布局模板；也可直接把文件拖到 3D 画面">📂 导入CAD/模板</button>
+          <button id="layout_asset_btn" class="btn-sec" title="上传 Blender 导出的 .glb 写实模型并关联到库区或货架">🧊 写实模型</button>
+          <button id="layout_photo_btn" class="btn-sec">📷 拍照生成</button>
+        </div>
+        <div class="lay-acts-right">
+          <span id="layout_dirty" class="dirty-dot hidden">● 未保存改动</span>
+          <button id="layout_save" class="btn-save">保存布局</button>
+          <button id="layout_close" class="btn-close">关闭</button>
+        </div>
+      </div>
+      <input id="layout_file" type="file" accept=".json,.dxf,.ifc" style="display:none" />
+    </div>
+  </div>
+
+  <!-- 拍照生成 3D 场景弹窗：多图 + 先验尺寸 + 并排校对 -->
+  <div id="photoModal" class="modal hidden">
+    <div class="modal-card" style="max-width:880px">
+      <div class="modal-header">
+        <h3>📷 拍照生成 3D 场景</h3>
+        <button class="modal-x" id="photoClose">✕</button>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:280px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">1. 选照片（可多选，多角度更准）</div>
+          <input id="photo_files" type="file" accept="image/*" capture="environment" multiple style="display:none" />
+          <button id="photo_pick" style="background:#334155;color:#e2e8f0">选择 / 拍摄照片</button>
+          <div id="photo_thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+
+          <div style="font-size:13px;color:var(--muted);margin:14px 0 6px">2. 参照物（可选，用于校准真实尺寸）</div>
+          <select id="photo_ref" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+            <option value="">画面中没有参照物</option>
+            <option value="pallet">标准托盘（1.2 × 1.0 m）</option>
+            <option value="tape">卷尺 / 可见刻度</option>
+            <option value="a4">A4 纸（0.21 × 0.297 m）</option>
+          </select>
+
+          <div style="font-size:13px;color:var(--muted);margin:14px 0 6px">3. 已知尺寸（可选，填了就更准）</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input id="ph_rackW" type="number" step="0.1" placeholder="标准货架宽(m)" />
+            <input id="ph_rackD" type="number" step="0.1" placeholder="标准货架深(m)" />
+            <input id="ph_rows" type="number" step="1" placeholder="层数" />
+            <input id="ph_cols" type="number" step="1" placeholder="每层位数" />
+            <input id="ph_roomW" type="number" step="0.5" placeholder="房间宽(m)" />
+            <input id="ph_roomD" type="number" step="0.5" placeholder="房间深(m)" />
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">提示：AI 擅长数数与判断位置，不擅长推算米数。填了真实尺寸，尺寸就是准的。</div>
+          <button id="photo_go" style="background:#16a34a;color:#fff;margin-top:12px">开始识别</button>
+          <div id="photo_msg" class="msg"></div>
+        </div>
+
+        <div style="flex:1;min-width:300px;border-left:1px solid var(--border);padding-left:16px">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px">识别结果校对</div>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px">原图</div>
+              <img id="photo_preview" style="max-width:200px;max-height:170px;border-radius:8px;display:none" />
+              <div id="photo_preview_ph" style="font-size:12px;color:var(--muted)">（未选择）</div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--muted);margin-bottom:4px">生成的俯视图</div>
+              <div id="photo_plan" style="min-width:200px;min-height:120px"></div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px">
+            <span style="color:#f59e0b">■</span> 橙框＝识别不确定，请重点核对
+          </div>
+          <ul id="photo_warn" style="margin:10px 0 0;padding-left:18px;font-size:12px;max-height:140px;overflow:auto"></ul>
+          <div class="actions" style="margin-top:12px">
+            <button id="photo_apply" style="background:#16a34a;color:#fff" disabled>套用到布局编辑器</button>
+            <button id="photo_cancel" style="background:#475569;color:#e2e8f0">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 系统管理弹窗（仅管理员） -->
+  <div id="adminModal" class="modal hidden">
+    <div class="modal-card" style="max-width:760px">
+      <div class="modal-header">
+        <h3>⚙ 系统管理</h3>
+        <button class="modal-x" id="adminClose">✕</button>
+      </div>
+      <div class="tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px">
+        <button class="tab active" data-tab="svc">服务凭证</button>
+        <button class="tab" data-tab="map">ERP 编码映射</button>
+        <button class="tab" data-tab="users">用户管理</button>
+        <button class="tab" data-tab="io">出入库记录</button>
+        <button class="tab" data-tab="model">智能模型</button>
+      </div>
+
+      <button id="itemCodesBtn" type="button" style="margin-bottom:12px">货品编码整理 · 条码与正式编号</button>
+      <a href="./sync.html#permissions" target="_blank" rel="noopener" style="display:inline-block;margin:0 0 12px 12px;color:#93c5fd">分配仓库权限 ↗</a>
+      <div class="tabpane hidden" data-pane="model" id="assistantModelSettings"></div>
+      <!-- 服务凭证 -->
+      <div class="tabpane" data-pane="svc">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+          <input id="svcName" placeholder="凭证名称，如 ERP-WMS-生产" style="flex:1;min-width:200px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)" />
+          <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="svcScopeErp" checked /> erp:sync</label>
+          <label style="font-size:13px;color:var(--muted)"><input type="checkbox" id="svcScopeSupos" /> supos:device</label>
+          <button id="svcCreate" style="background:#16a34a;color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer">创建凭证</button>
+        </div>
+        <div id="svcTokenBox" class="hidden" style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">
+          <div style="color:#f87171;margin-bottom:6px">⚠ 令牌仅显示一次，请立即复制保存：</div>
+          <code id="svcTokenText" style="display:block;word-break:break-all;color:#7dd3fc"></code>
+          <button id="svcCopy" style="margin-top:8px;background:#334155;color:#e2e8f0;border:0;padding:5px 12px;border-radius:6px;cursor:pointer">复制</button>
+        </div>
+        <div id="svcList"></div>
+      </div>
+
+      <!-- ERP 编码映射 -->
+      <div class="tabpane hidden" data-pane="map">
+        <p class="csv-tip" style="margin:0 0 8px">粘贴对照表（每行一条，支持 CSV 或 JSON 数组）。
+          CSV 表头可写 <code>local_code,erp_code,local_type</code>；<code>local_type</code> 取 <code>item</code>（货品，默认）或 <code>node</code>（库位）。
+          <code>local_code</code> 货品可用 SKU / ERP 码 / 物品 ID，库位用 loc_code。</p>
+        <textarea id="mapInput" rows="8" placeholder='local_code,erp_code,local_type
+SKU-A01,MAT-1001,item
+WH-1-A-L01-B01,LOC-2001,node' style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:monospace;font-size:13px"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button id="mapImport" style="background:#16a34a;color:#fff;border:0;padding:8px 16px;border-radius:8px;cursor:pointer">导入映射</button>
+          <span id="mapResult" style="align-self:center;font-size:13px;color:var(--muted)"></span>
+        </div>
+      </div>
+
+      <!-- 用户管理（仅管理员可见，主账号在此为同事开通子账号）-->
+      <div class="tabpane hidden" data-pane="users">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px">
+          <label style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px">用户名<input id="uUser" placeholder="登录账号" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);min-width:150px" /></label>
+          <label style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px">姓名<input id="uName" placeholder="显示名（选填）" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);min-width:150px" /></label>
+          <label style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px">初始密码<input id="uPw" type="password" placeholder="≥8 位" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);min-width:150px" /></label>
+          <label style="font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px">角色
+            <select id="uRole" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+              <option value="operator">操作员（可入库/出库/布局）</option>
+              <option value="viewer">只读（仅查看）</option>
+              <option value="admin">管理员（全权）</option>
+            </select>
+          </label>
+          <button id="uCreate" style="background:#16a34a;color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer">＋ 新建子账号</button>
+        </div>
+        <p class="csv-tip" style="margin:0 0 8px">主账号可在此为同事开通子账号：<b>管理员</b>全权、<b>操作员</b>可入库/出库/布局、<b>只读</b>仅查看。禁用后该账号将无法登录（不能禁用自己）。</p>
+        <div id="userList"></div>
+      </div>
+
+      <!-- 出入库记录（仅管理员，审计流水）-->
+      <div class="tabpane hidden" data-pane="io">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+          <label style="font-size:13px;color:var(--muted)">类型
+            <select id="ioType" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)">
+              <option value="">全部</option>
+              <option value="inbound">入库</option>
+              <option value="outbound">出库</option>
+              <option value="move">移库</option>
+              <option value="merge">合并</option>
+              <option value="relocate">重定位</option>
+              <option value="erp_sync">ERP 同步</option>
+            </select>
+          </label>
+          <label style="font-size:13px;color:var(--muted)">操作人
+            <input id="ioActor" placeholder="模糊匹配，如：张三" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);min-width:160px" />
+          </label>
+          <button id="ioRefresh" style="background:#16a34a;color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer">查询</button>
+          <span id="ioMsg" style="align-self:center;font-size:13px;color:var(--muted)"></span>
+        </div>
+        <div style="max-height:46vh;overflow:auto">
+          <table class="io-table" style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr>
+                <th>时间</th><th>类型</th><th>货品</th><th>数量</th><th>库位（从 → 到）</th><th>操作人</th><th>同步</th>
+              </tr>
+            </thead>
+            <tbody id="ioBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:14px">点击「查询」加载出入库流水</td></tr></tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button id="ioMore" class="hidden" style="background:#334155;color:#e2e8f0;border:0;padding:7px 14px;border-radius:8px;cursor:pointer">加载更多</button>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:16px;display:flex;justify-content:flex-end">
+        <button id="adminClose2" style="background:#475569;color:#e2e8f0;border:0;padding:8px 16px;border-radius:8px;cursor:pointer">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 写实模型上传 / 管理 -->
+  <div id="assetModal" class="modal hidden">
+    <div class="modal-box">
+      <h3>🧊 写实模型（Blender GLB）</h3>
+      <p class="csv-tip">将 Blender 导出的 <b>.glb</b> 绑定到当前库区或其中的货架，不会新建库区，也不会改变格位和库存。模型尺寸、层高和摆放应与现有布局一致。</p>
+      <p id="assetContext" class="csv-tip"></p>
+      <label for="assetTarget">模型绑定对象</label>
+      <select id="assetTarget"></select>
+      <label>选择模型文件（.glb，≤32MB）</label>
+      <input id="assetFile" type="file" accept=".glb" />
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <label style="flex:1;min-width:80px">偏移 X<input id="assetX" type="number" step="0.1" value="0" /></label>
+        <label style="flex:1;min-width:80px">偏移 Y<input id="assetY" type="number" step="0.1" value="0" /></label>
+        <label style="flex:1;min-width:80px">偏移 Z<input id="assetZ" type="number" step="0.1" value="0" /></label>
+        <label style="flex:1;min-width:80px">旋转°<input id="assetRot" type="number" step="1" value="0" /></label>
+        <label style="flex:1;min-width:80px">缩放<input id="assetScale" type="number" step="0.1" value="1" /></label>
+      </div>
+      <div class="msg" id="assetMsg"></div>
+      <div class="actions">
+        <button id="assetUpload" style="background:var(--primary-2);color:#fff">上传并绑定</button>
+        <button id="assetDelete" style="background:var(--danger-2);color:#fff">移除</button>
+        <button id="assetClose" style="background:var(--surface-3);color:var(--text)">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="transferModal" class="modal hidden"><div class="modal-box" style="width:min(420px,94vw)"><h3>库存导入 / 导出</h3><p>选择需要的操作。</p><div class="actions"><button id="transferImport">导入库存</button><button id="transferExport">导出库存</button><button id="transferClose">关闭</button></div></div></div>
+  <!-- 库存导出 -->
+  <div id="exportModal" class="modal hidden">
+    <div class="modal-box" style="width:min(420px,94vw)">
+      <h3>导出库存</h3>
+      <p class="csv-tip">导出当前有库存的物品（库位 / 物品 / SKU / ERP / 数量）。范围可选全部库区或仅当前库区。</p>
+      <label>范围
+        <select id="expScope">
+          <option value="all">全部库区</option>
+          <option value="room">仅当前库区</option>
+        </select>
+      </label>
+      <label>格式
+        <select id="expFmt">
+          <option value="xlsx">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+        </select>
+      </label>
+      <div id="expResult" hidden style="margin-top:14px;overflow-wrap:anywhere">
+        <p id="expStatus" role="status"></p>
+        <button id="expSaveAs" type="button" class="btn-primary" hidden>选择保存位置</button>
+        <a id="expDownload" class="btn-primary" style="display:inline-block;padding:10px 14px">下载文件</a>
+        <p id="expFilename" class="csv-tip"></p>
+        <p id="expSaveHint" class="csv-tip"></p>
+      </div>
+      <div class="actions">
+        <button id="expOk" class="btn-primary">生成文件</button>
+        <button id="expCancel" class="btn-ghost">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 「当前库区」选择器：由顶栏 #locPickerBtn 打开。
+       底层仍复用隐藏的 #siteSel / #roomSel 作为数据源与切换入口（走既有的 change 逻辑，不重写）；
+       #addSiteBtn / #addRoomBtn / #roomEditBtn 也一并从顶栏移到这里 —— 它们的 handler 按 id 绑定，与位置无关。 -->
+  <div id="locPickerModal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="modal-box lp-box">
+      <h3>切换仓库 / 库区</h3>
+      <p class="lp-tip">库区属于仓库：先在上面选仓库，再选它下面的库区。</p>
+      <div class="lp-grid">
+        <div class="lp-col">
+          <div class="lp-head"><span class="ico">🏢</span>仓库</div>
+          <div id="lpSiteList" class="lp-list"></div>
+          <button id="addSiteBtn" class="lp-add" title="新建仓库" aria-label="新建仓库">＋ 新建仓库</button>
+        </div>
+        <div class="lp-col">
+          <div class="lp-head"><span class="ico">📦</span>库区</div>
+          <div id="lpRoomList" class="lp-list"></div>
+          <button id="addRoomBtn" class="lp-add" title="新建库区" aria-label="新建库区">＋ 新建库区</button>
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="roomEditBtn" class="btn-ghost" title="库区设置：名称 / 尺寸 / 门 / 窗">库区设置</button>
+        <button id="lpClose" class="btn-primary">完成</button>
+      </div>
+      <!-- 隐藏的真身：仅由 JS 读写，切勿删除 -->
+      <div style="display:none"><select id="siteSel"></select><select id="roomSel"></select></div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+  <!-- 交互式使用引导（分步高亮 + 下一步）-->
+  <!-- 格位二维码弹窗 -->
+  <div id="qrModal" class="cellModal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="cellModal-card">
+      <div class="cm-head"><b id="qrTitle">格位码</b><button class="cellmodal-close" onclick="document.getElementById('qrModal').classList.add('hidden')">✕</button></div>
+      <div id="qrBox" style="text-align:center;padding:8px 0"></div>
+      <div class="muted" style="font-size:12px;text-align:center">扫码可定位到该格位</div>
+    </div>
+  </div>
+  <!-- 格位物品时间线弹窗 -->
+  <div id="histModal" class="cellModal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="cellModal-card">
+      <div class="cm-head"><b id="histTitle">库存流水</b><button class="cellmodal-close" aria-label="关闭库存流水，返回格位" title="关闭库存流水，返回格位" onclick="document.getElementById('histModal').classList.add('hidden')">✕</button></div>
+      <div id="histBox" style="max-height:60vh;overflow:auto;padding:4px 2px"></div>
+    </div>
+  </div>
+  <script src="../labels/vendor/qrcode-generator.js"></script>
+</body>
+</html>

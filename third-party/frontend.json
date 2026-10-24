@@ -1,0 +1,75 @@
+[
+  {
+    "name": "three",
+    "version": "0.160.0",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/three/-/three-0.160.0.tgz",
+    "files": [
+      {
+        "path": "apps/web/prototype/vendor/three.module.js",
+        "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495"
+      },
+      {
+        "path": "apps/web/prototype/vendor/jsm/controls/OrbitControls.js",
+        "sha256": "5a44a9e86a2a0fb11933eed69bc2cd33c76a496854c1aed6ed776efa87d7b064"
+      },
+      {
+        "path": "apps/web/prototype/vendor/jsm/loaders/GLTFLoader.js",
+        "sha256": "d073b438e6a07e1359741dd5d6c76c953420cc0d4fd84eb1bdde94315540e6a3"
+      },
+      {
+        "path": "apps/web/prototype/vendor/jsm/utils/BufferGeometryUtils.js",
+        "sha256": "9be041e96308775d00e2695cc607645b9a9b64fd7c0e759dd8f7c00a8d92becb"
+      }
+    ],
+    "license_files": [
+      "third-party/three/LICENSE"
+    ]
+  },
+  {
+    "name": "jsqr",
+    "version": "1.4.0",
+    "license": "Apache-2.0",
+    "source": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
+    "files": [
+      {
+        "path": "apps/web/prototype/vendor/jsQR.js",
+        "sha256": "bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859"
+      }
+    ],
+    "license_files": [
+      "third-party/jsqr/LICENSE"
+    ]
+  },
+  {
+    "name": "qrcode-generator",
+    "version": "1.4.4",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/qrcode-generator/-/qrcode-generator-1.4.4.tgz",
+    "files": [
+      {
+        "path": "apps/web/labels/vendor/qrcode-generator.js",
+        "sha256": "18ae399f81182bc9de916e9c77b195df20cc58d6f2d55a62b085a299f1bf1780"
+      }
+    ],
+    "license_files": [
+      "third-party/qrcode-generator/LICENSE"
+    ],
+    "license_source": "https://raw.githubusercontent.com/kazuhikoarase/qrcode-generator/master/LICENSE"
+  },
+  {
+    "name": "xlsx",
+    "version": "0.20.3",
+    "license": "Apache-2.0",
+    "source": "https://cdn.sheetjs.com/xlsx-0.20.3/package/",
+    "files": [
+      {
+        "path": "apps/web/prototype/vendor/xlsx.full.min.js",
+        "sha256": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41"
+      }
+    ],
+    "license_files": [
+      "third-party/xlsx/LICENSE"
+    ]
+  }
+]

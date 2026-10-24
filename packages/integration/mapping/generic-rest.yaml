@@ -1,0 +1,45 @@
+# 通用 REST 适配器字段映射（示例，可热更新不重启）
+# 规则：每一行 `事件类型.远端字段: 本地字段`
+#   —— applyMapping 读 payload[本地字段] 写入 out[远端字段]，故必须写成「远端:本地」。
+#   —— 旧版误写成「本地:远端」导致字段全丢，已按 supos-uns.yaml 的正确约定修正。
+# 事件类型与 apps/api/db.mjs 的 emit() 对齐：
+#   item.created / item.updated / item.deleted
+#   inventory.changed
+#   rack.created / rack.updated / rack.deleted
+system: generic-rest
+description: 通用 REST 出站映射（修正方向：远端字段: 本地字段）
+base_url: ${OUTBOUND_BASE_URL}
+auth_header: ${OUTBOUND_AUTH}
+
+# 路由（可选）：事件类型 -> "METHOD /path"
+route.item.created: POST /items
+route.inventory.changed: PUT /inventory
+route.rack.created: POST /racks
+route.rack.updated: PATCH /racks
+route.rack.deleted: DELETE /racks
+
+# 字段映射（远端字段: 本地字段）
+item.created.name: name
+item.created.quantity: qty
+item.created.location: loc_code
+item.created.item_id: item_id
+item.created.erp_code: erp_code
+
+inventory.changed.location_id: node_id
+inventory.changed.on_hand_qty: qty
+inventory.changed.sku_id: item_id
+inventory.changed.erp_code: erp_code
+
+rack.created.code: rack_code
+rack.created.name: name
+rack.created.rows: rows
+rack.created.cols: cols
+rack.created.type: type
+
+rack.updated.code: rack_code
+
+rack.deleted.code: rack_code
+
+item.updated.item_id: item_id
+
+item.deleted.item_id: item_id

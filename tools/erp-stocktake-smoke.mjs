@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+if(process.env.SPATIAL_TEST_ERP!=='1')throw Error('此脚本仅可用于隔离ERP测试实例');
+const base='http://127.0.0.1:3000';let token;
+async function call(path,method='GET',body){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});const value=await r.json();assert.ok(r.ok,JSON.stringify({path,status:r.status,error:value.error}));return value;}
+const credentials={username:'erp_test_admin',password:'ErpTest-2026-only',name:'ERP模拟验收'};
+if(!(await call('/api/auth/status')).initialized)await call('/api/auth/bootstrap','POST',credentials);
+token=(await call('/api/auth/login','POST',credentials)).token;
+const source='demo-erp',loc='WH-1-A-L01-B01';
+const row={sku:'ERP-DEMO-01',name:'模拟ERP轴承',qty:8,unit:'件',loc_code:loc};
+await call('/api/integration/snapshot','POST',{source,version:1,rows:[row]});
+let r=await call('/api/erp-stocktakes','POST',{loc_code:loc,source});
+assert.equal(r.baseline[0].qty,8);
+r=await call('/api/erp-stocktakes/'+r.id,'PUT',{revision:r.revision,counts:r.baseline.map(x=>({id:x.id,qty:7})),reason:'模拟盘亏一件'});
+for(const action of ['submit','approve'])r=await call('/api/erp-stocktakes/'+r.id+'/action','POST',{revision:r.revision,action});
+r=await call('/api/erp-stocktakes/'+r.id+'/send','POST',{revision:r.revision});
+assert.equal(r.state,'waiting_sync');assert.equal(r.receipt.simulated,true);
+assert.equal((await call('/api/cells/'+loc+'/items'))[0].qty,8,'受理回执不能直接修改库存');
+assert.equal((await call('/api/erp-stocktakes/'+r.id+'/reconcile','POST',{revision:r.revision})).matched,false);
+await call('/api/integration/snapshot','POST',{source,version:2,rows:[{...row,qty:7}]});
+r=await call('/api/erp-stocktakes/'+r.id+'/reconcile','POST',{revision:r.revision});
+assert.equal(r.state,'confirmed');assert.equal((await call('/api/cells/'+loc+'/items'))[0].qty,7);
+console.log('通过：模拟ERP实盘、审核、发送、回传、对账；受理前后库存分别为8、8、7。');

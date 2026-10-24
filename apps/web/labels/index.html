@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <script src="../../../runtime.js"></script>
+  <script>
+    const labelFetch=window.fetch.bind(window);
+    window.fetch=(url,options)=>labelFetch(typeof url==='string' && url.startsWith('/api/') ? (window.SPATIAL_RUNTIME?.basePath || '')+url : url,options);
+  </script>
+  <meta charset="utf-8" />
+  <title>位置二维码打印页</title>
+  <script src="./vendor/qrcode-generator.js"></script>
+  <style>
+    :root {
+      --bg:#0b1120; --surface:#0f172a; --surface-2:#15203a; --surface-3:#1e293b; --surface-4:#243149;
+      --border:#27344b; --border-soft:#1c2738; --border-strong:#33425e;
+      --text:#e8eef9; --text-2:#9fb0c9; --muted:#64748b;
+      --primary:#3b82f6; --primary-2:#2563eb;
+      --radius:12px; --radius-sm:9px;
+      --ring:0 0 0 3px rgba(59,130,246,.35);
+      --accent-grad:linear-gradient(135deg,#3b82f6,#6366f1);
+      --ease:cubic-bezier(.2,.7,.3,1);
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; color: #111; background:var(--bg); }
+    .toolbar { position: sticky; top: 0; z-index: 5; padding: 12px 16px; background: rgba(11,17,32,.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-soft); color: var(--text); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .toolbar button { padding: 8px 14px; border: 0; border-radius: 9px; background: var(--primary-2); color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; transition: background .15s, transform .05s, box-shadow .15s; box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+    .toolbar button:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .toolbar button:active { transform: translateY(0); }
+    .toolbar .mode-btn { background: var(--surface-3); color: var(--text-2); box-shadow: none; font-weight: 500; }
+    .toolbar .mode-btn:hover { background: #2b3a55; color: var(--text); transform: translateY(-1px); }
+    .toolbar .mode-btn.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,.35); }
+    .toolbar a { color:var(--text); text-decoration:none; padding:8px; }
+    .toolbar button:disabled { opacity:.45; cursor:default; box-shadow:none; }
+    .toolbar :focus-visible { outline:2px solid #60a5fa; outline-offset:3px; }
+    .toolbar .muted { font-size: 12px; color: var(--muted); }
+    #rackSel, #roomScope { padding: 8px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 13px; outline: none; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+    #rackSel:focus, #roomScope:focus { border-color: var(--primary); box-shadow: var(--ring); }
+    /* 细滚动条 */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); background-clip: content-box; }
+    /* A4：210×297mm，每页 3 列 × 8 行 = 24 个标签 */
+    @page { size: A4; margin: 8mm; }
+    .sheet { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 4mm;
+      display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 34mm; gap: 2mm; }
+    .label { background:#fff; border: 1px dashed #94a3b8; border-radius: 6px; display: flex; align-items: center; gap: 6px; padding: 4px; }
+    .label canvas { width: 26mm; height: 26mm; }
+    .label .meta { font-size: 9px; line-height: 1.25; word-break: break-all; }
+    .label .meta b { font-size: 10px; }
+    .label .meta .loc { font-family: ui-monospace, monospace; color: #1d4ed8; }
+    .label .meta .cname { color: #b45309; font-weight: 600; }
+    @media print { .toolbar { display: none; } body { background: #fff; } }
+  </style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <a href="../prototype/index.html">← 返回三维库存</a>
+    <button id="printBtn" disabled onclick="window.print()">🖨 打印（A4）</button>
+    <span style="display:flex;gap:6px;margin-left:4px">
+      <button id="modeLoc" class="mode-btn active">库位标签</button>
+      <button id="modeItem" class="mode-btn">货品标签</button>
+    </span>
+    <select id="roomScope" aria-label="标签范围"><option value="room">当前库区</option><option value="all">全部库区</option></select><select id="rackSel" title="按货架筛选后再打印"></select>
+    <span class="muted" id="count"></span>
+    <span class="muted" id="hint">每个储位一个二维码，贴到对应柜/架/盒上，录入时扫码即绑定位置（LOC Code）。</span>
+  </div>
+  <div id="sheet" class="sheet"></div>
+
+  <script>
+    // 数据一律取自真实接口，不再回退「样例库位」：
+    // 旧版会生成 WH-BR1-WD01-… 这类与真实库位（WH-1-A-L01-B01）不符的假码，
+    // 一旦打印贴到货架上，扫码全部无法定位，排查成本极高——宁可明确报错。
+    function showLoadError(what) {
+      const sheet = document.getElementById('sheet');
+      sheet.innerHTML = `<div style="padding:24px;color:#b91c1c;font-size:14px;line-height:1.9">
+        <b>无法加载${what}。</b><br>
+        本页需要后端提供真实数据，请确认服务已启动（默认 http://localhost:3000）后刷新本页。<br>
+        离线场景请改用 <code>standalone-labels.html</code>（打包时已内联数据）。
+      </div>`;
+      setCount(0);
+    }
+
+    // 用本地 qrcode-generator 把字符串画到 canvas（不依赖任何 CDN）
+    function drawQR(canvas, text) {
+      const qr = qrcode(0, 'M'); // 0 = 自动选版本
+      qr.addData(text);
+      qr.make();
+      const cell = 5, margin = 4; // 每个模块 5px，四周留白 4px
+      const n = qr.getModuleCount();
+      canvas.width = n * cell + margin * 2;
+      canvas.height = n * cell + margin * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0f172a';
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (qr.isDark(r, c)) ctx.fillRect(margin + c * cell, margin + r * cell, cell, cell);
+        }
+      }
+    }
+
+    // 不再截断到 24 个：A4 每页 24 个由 CSS（@page + grid-auto-rows）自动分页，
+    // 硬截断会导致 B/C 货架的标签永远打不出来。全部渲染，打印时自动分多页。
+    let allCodes = [];
+    let allCells = [];
+    function renderSheet(cells) {
+      const sheet = document.getElementById('sheet');
+      sheet.innerHTML = '';
+      cells.forEach((c) => {
+        const code = (typeof c === 'string') ? c : (c.loc_code || '');
+        const name = (c && typeof c === 'object') ? (c.name || '') : '';
+        const cell = document.createElement('div');
+        cell.className = 'label';
+        const canvas = document.createElement('canvas');
+        drawQR(canvas, code);
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const parts = code.split('-');
+        meta.innerHTML = `<b>${escapeLabel(parts.slice(0,3).join('-'))}</b><br><span class="loc">${escapeLabel(code)}</span>${name ? `<br><span class="cname">${escapeLabel(name)}</span>` : ''}`;
+        cell.appendChild(canvas);
+        cell.appendChild(meta);
+        sheet.appendChild(cell);
+      });
+      setCount(cells.length);
+    }
+
+    function setCount(n) {
+      document.getElementById('count').textContent = `共 ${n} 个标签`;
+      document.getElementById('printBtn').disabled = !n;
+    }
+
+    // 按货架筛选（库位码前 3 段，如 WH-1-A），便于分批打印
+    function fillRackSel(codes) {
+      const sel = document.getElementById('rackSel');
+      const racks = Array.from(new Set(codes.map((c) => String(c.loc_code || c).split('-').slice(0, 3).join('-')))).sort();
+      sel.innerHTML = '<option value="">全部货架</option>' + racks.map((r) => `<option value="${escapeLabel(r)}">${escapeLabel(r)}</option>`).join('');
+      sel.value = '';
+    }
+    function applyRackFilter() {
+      const f = document.getElementById('rackSel').value;
+      renderSheet(f ? allCells.filter((c) => String(c.loc_code || c).startsWith(f + '-')) : allCells);
+    }
+    document.getElementById('rackSel').onchange = applyRackFilter;
+
+    // 货品标签：二维码编码 sku（优先）或 item.id，手机扫码即识别该货品
+    const escapeLabel=value=>String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function renderItemSheet(items) {
+      const sheet = document.getElementById('sheet');
+      sheet.innerHTML = '';
+      items.forEach((it) => {
+        const code = (it.sku && String(it.sku).trim()) || it.id;
+        const cell = document.createElement('div');
+        cell.className = 'label';
+        const canvas = document.createElement('canvas');
+        drawQR(canvas, code);
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<b>${escapeLabel(it.name)}</b><br><span class="loc">${escapeLabel(it.sku ? '型号 ' + it.sku : 'ID ' + it.id)}</span>`;
+        cell.appendChild(canvas);
+        cell.appendChild(meta);
+        sheet.appendChild(cell);
+      });
+      setCount(items.length);
+    }
+
+    const params=new URLSearchParams(location.search);
+    const scopedRoom=params.get('room');
+    let renderVersion=0;
+    const roomScope=document.getElementById('roomScope');
+    if(!scopedRoom || params.get('loc')){roomScope.value='all';roomScope.hidden=true;}
+    if(scopedRoom)roomScope.options[0].textContent=params.get('roomName') ? params.get('roomName')+'（'+scopedRoom+'）' : scopedRoom;
+    roomScope.onchange=()=>setMode(mode);
+    const inRoom=code=>roomScope.value==='all'||String(code||'').startsWith(scopedRoom+'-');
+    function setMode(m) {
+      mode = m;
+      const version=++renderVersion;
+      document.getElementById('printBtn').disabled=true;
+      document.getElementById('sheet').replaceChildren();
+      document.getElementById('count').textContent='正在加载标签…';
+      document.getElementById('modeLoc').setAttribute('aria-pressed',String(m==='loc'));
+      document.getElementById('modeItem').setAttribute('aria-pressed',String(m==='item'));
+      document.getElementById('modeLoc').classList.toggle('active', m === 'loc');
+      document.getElementById('modeItem').classList.toggle('active', m === 'item');
+      document.getElementById('hint').textContent = m === 'loc'
+        ? '每个储位一个二维码，贴到对应柜/架/盒上，录入时扫码即绑定位置（LOC Code）。'
+        : '每件货品一个二维码，贴到实物/外箱上，手机扫货品码即可识别（入库/出库/移库通用）。';
+      // 货架筛选只对「库位标签」有意义，货品模式隐藏
+      document.getElementById('rackSel').style.display = (m === 'loc') ? '' : 'none';
+      if (m === 'loc') {
+        // 保留完整对象（含 name）以便打印格位自定义名称；兼容纯字符串兜底
+        const show = (cells) => { if(version!==renderVersion)return; const loc=new URLSearchParams(location.search).get('loc');const visible=loc?cells.filter(c=>String(c.loc_code || c)===loc):cells.filter(c=>inRoom(c.loc_code||c));allCells=visible;fillRackSel(visible);renderSheet(visible);if(loc)document.getElementById('hint').textContent='当前格位：'+loc+'，点击打印即可打印此格位码。'; };
+        const inline = (typeof window.__CELLS__ !== 'undefined' && window.__CELLS__ && window.__CELLS__.length) ? window.__CELLS__ : null;
+        if (inline) show(inline);
+        else {
+          const token = localStorage.getItem('spatial_token') || '';
+          fetch('/api/cells', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} })
+            .then((r) => r.ok ? r.json() : Promise.reject())
+            .then((cells) => show(cells)).catch(() => {if(version===renderVersion)showLoadError('库位数据');});
+        }
+      } else {
+        allCodes = [];
+        const loc = new URLSearchParams(location.search).get('loc');
+        const showItems = items => {
+          if (version!==renderVersion) return;
+          const scoped = loc ? items.filter(item => item.loc_code === loc && Number(item.qty) > 0) : items.filter(item=>inRoom(item.loc_code));
+          const labels = scoped.map(item => ({...item,id:item.id || item.item_id}));
+          const unique = [...new Map(labels.map(item => [JSON.stringify([item.source || '',window.SPATIAL_RUNTIME?.mode==='integration' ? item.sku : (item.id || item.sku)]),item])).values()];
+          renderItemSheet(unique);
+          if (loc) document.getElementById('hint').textContent = '当前格位：'+loc+'，仅显示此格位有库存的货品。';
+          if (!unique.length) document.getElementById('count').textContent = '暂无可打印的货品标签';
+        };
+        const inline = (typeof window.__ITEMS__ !== 'undefined' && window.__ITEMS__ && window.__ITEMS__.length) ? window.__ITEMS__ : null;
+        if (inline) showItems(inline);
+        else {
+          const token = localStorage.getItem('spatial_token') || '';
+          fetch(loc || roomScope.value==='room' ? '/api/v1/inventory' : '/api/v1/items', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} })
+            .then((r) => r.ok ? r.json() : Promise.reject())
+            .then(showItems).catch(() => { if(version===renderVersion)showLoadError('货品数据'); });
+        }
+      }
+    }
+    let mode = 'loc';
+    document.getElementById('modeLoc').onclick = () => setMode('loc');
+    document.getElementById('modeItem').onclick = () => setMode('item');
+    setMode('loc');
+  </script>
+</body>
+</html>

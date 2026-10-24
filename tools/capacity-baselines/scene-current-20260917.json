@@ -1,0 +1,65 @@
+{
+  "source_commit": "d9236c1",
+  "environment": "Windows i7-7700, Chromium 152, 960x540, pixelRatio=1",
+  "scope": "真实生成器隔离场景，每架100格，每格8条库存；60帧采样；不含HTTP、业务鉴权和完整应用UI",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+  "samples": [
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 5000,
+      "buildMs": 293,
+      "firstRenderMs": 547,
+      "frameP95Ms": 42.1,
+      "renderP95Ms": 40.2,
+      "drawCalls": 5250,
+      "memory": {
+        "geometries": 301,
+        "textures": 50
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    },
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 10000,
+      "buildMs": 301,
+      "firstRenderMs": 764,
+      "frameP95Ms": 68.5,
+      "renderP95Ms": 68,
+      "drawCalls": 10500,
+      "memory": {
+        "geometries": 601,
+        "textures": 100
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    },
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 10000,
+      "buildMs": 280,
+      "firstRenderMs": 731,
+      "frameP95Ms": 68.5,
+      "renderP95Ms": 70.9,
+      "drawCalls": 10500,
+      "memory": {
+        "geometries": 601,
+        "textures": 100
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    }
+  ]
+}

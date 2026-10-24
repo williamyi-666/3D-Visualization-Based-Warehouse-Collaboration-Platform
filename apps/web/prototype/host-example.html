@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ERP/WMS 嵌入联调示例</title>
+<style>body{margin:0;background:#0f172a;color:#e2e8f0;font:14px system-ui}header{padding:12px}input,button{padding:8px;margin:4px}iframe{width:100%;height:72vh;border:0}pre{white-space:pre-wrap;margin:12px}</style>
+<header><strong>ERP/WMS 宿主联调示例</strong><p>模拟宿主：从三维库存卡片点击“打开业务”后展示当前同步库存详情。这里没有真实ERP单据，正式接入时由ERP/WMS路由打开对应业务。</p><input id="sku" aria-label="SKU" value="BEARING-6204"><button id="locate" disabled>定位物料</button><span id="status">等待三维页就绪…</span></header>
+<section id="business" hidden style="padding:16px" aria-label="模拟ERP库存详情"><h2>模拟 ERP 库存详情</h2><p id="businessStatus" role="status"></p><dl id="businessFields"></dl><button id="backToWarehouse">返回三维视图</button></section>
+<iframe id="warehouse" title="仓储三维视图" src="./index.html?compact=1"></iframe><pre id="result" aria-live="polite"></pre>
+<script src="../../../runtime.js"></script><script type="module" src="./host-example.js"></script></html>

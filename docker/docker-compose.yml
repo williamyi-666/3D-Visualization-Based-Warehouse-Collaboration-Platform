@@ -1,0 +1,38 @@
+# spatial-inventory/docker/docker-compose.yml
+# MVP 本地基础设施：PostgreSQL(含 pgvector) + MinIO(对象存储)
+# 启动：docker compose up -d
+# 初始化库：psql 连接后执行 ../db/schema.sql
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: spatial-pg
+    environment:
+      POSTGRES_USER: spatial
+      POSTGRES_PASSWORD: spatial
+      POSTGRES_DB: spatial
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spatial"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio
+    container_name: spatial-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: spatial
+      MINIO_ROOT_PASSWORD: spatial123
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # 控制台
+    volumes:
+      - miniodata:/data
+
+volumes:
+  pgdata:
+  miniodata:

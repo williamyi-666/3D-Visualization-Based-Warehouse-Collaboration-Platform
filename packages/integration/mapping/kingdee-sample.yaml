@@ -1,0 +1,15 @@
+# 金蝶云星空（示例占位映射）—— 仅演示字段对应关系，实际对接前需按对方 API 文档补全路径/签名
+# 这是「后期接入具体 WMS/ERP 时只需新增一份映射 + 一个 Adapter」的样板。
+system: kingdee
+description: 金蝶云星空 出站映射（占位，待按 API 文档补全）
+base_url: ${KINGDEE_BASE_URL}
+auth_header: ${KINGDEE_AUTH}
+
+route.item_created: POST /k3cloud/Kingdee.BOS.WebApi.ServicesStub.DynamicFormService.Save
+route.inventory_changed: POST /k3cloud/.../Save
+
+item_created.name: FName
+item_created.qty: FQty
+item_created.loc_code: FStockLocNo
+inventory_changed.node_id: FStockLocId
+inventory_changed.qty: FBaseQty

@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>出入库台 · 扫码 / 拍照操作</title>
+<script src="../../../runtime.js"></script>
+<script src="./request-bridge.js"></script>
+<script src="./random-id.js"></script>
+<script src="./counter-write.js"></script>
+<script src="./business-fields.js"></script>
+<script src="./vendor/jsQR.js"></script>
+<style>
+  :root {
+    --bg:#0b1120; --bg-2:#0e1730; --surface:#0f172a; --surface-2:#15203a; --surface-3:#1e293b; --surface-4:#243149;
+    --border:#27344b; --border-soft:#1c2738; --border-strong:#33425e;
+    --text:#e8eef9; --text-2:#9fb0c9; --muted:#64748b;
+    --primary:#3b82f6; --primary-2:#2563eb;
+    --success:#22c55e; --success-2:#16a34a;
+    --danger:#ef4444; --danger-2:#b91c1c;
+    --radius:12px; --radius-sm:9px; --radius-lg:16px;
+    --shadow:0 14px 38px rgba(0,0,0,.5); --shadow-sm:0 6px 18px rgba(0,0,0,.35); --shadow-xs:0 2px 8px rgba(0,0,0,.25);
+    --ring:0 0 0 3px rgba(59,130,246,.35);
+    --accent-grad:linear-gradient(135deg,#3b82f6,#6366f1);
+    --ease:cubic-bezier(.2,.7,.3,1);
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; min-height:100%; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:radial-gradient(130% 100% at 50% -12%, #111c38 0%, var(--bg) 58%) fixed; color:var(--text); }
+  .wrap { max-width:560px; margin:0 auto; padding:18px 16px 56px; }
+  .head { display:flex; align-items:center; gap:11px; margin:2px 0 16px; }
+  .head .logo { width:40px; height:40px; border-radius:12px; background:var(--accent-grad); display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 6px 18px rgba(59,130,246,.4); }
+  .head h1 { font-size:17px; margin:0; font-weight:700; letter-spacing:.3px; }
+  .head .sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .tabs { display:flex; gap:4px; padding:4px; margin-bottom:14px; background:var(--surface-2); border:1px solid var(--border-soft); border-radius:12px; }
+  .tab { flex:1; padding:9px; text-align:center; border-radius:9px; background:transparent; cursor:pointer; font-size:14px; color:var(--text-2); border:1px solid transparent; transition:background .15s, color .15s, box-shadow .15s; }
+  .tab:hover { color:var(--text); }
+  .tab.active { background:var(--accent-grad); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(59,130,246,.35); font-weight:600; }
+  .card { background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow-xs); }
+  label { display:block; font-size:13px; color:var(--text-2); margin:14px 0 6px; }
+  input,select,textarea { width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface-2); color:var(--text); font-size:14px; font-family:inherit; outline:none; transition:border-color .15s, box-shadow .15s; }
+  input:focus,select:focus,textarea:focus { border-color:var(--primary); box-shadow:var(--ring); }
+  .locbox { display:flex; gap:8px; align-items:center; }
+  .locbox input { flex:1; }
+  .locbox button { flex:0 0 auto; padding:10px 14px; border:0; border-radius:var(--radius-sm); background:var(--surface-3); color:var(--text); cursor:pointer; font-size:13px; transition:background .15s, transform .05s; }
+  .locbox button:hover { background:#2b3a55; }
+  .locbox button:active { transform:translateY(1px); }
+  .locstate { font-size:13px; margin-top:6px; min-height:18px; }
+  .ok { color:#86efac; }
+  .err { color:#fca5a5; }
+  video { width:100%; border-radius:10px; background:#000; display:block; }
+  .scanbar { display:flex; gap:8px; margin-top:8px; }
+  .scanbar button { flex:1; padding:10px; border:0; border-radius:var(--radius-sm); background:var(--surface-3); color:var(--text); cursor:pointer; font-size:13px; transition:background .15s, transform .05s; }
+  .scanbar button:hover { background:#2b3a55; }
+  .scanbar button:active { transform:translateY(1px); }
+  .scanbar button.on { background:var(--success-2); color:#fff; }
+  .suggest { margin-top:6px; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; display:none; background:var(--surface); box-shadow:var(--shadow-xs); }
+  .suggest div { padding:10px 12px; font-size:14px; cursor:pointer; border-bottom:1px solid var(--border-soft); color:var(--text); }
+  .suggest div:last-child { border-bottom:0; }
+  .suggest div:hover { background:var(--surface-2); }
+  .items { margin-top:6px; display:flex; flex-direction:column; gap:8px; }
+  .item { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:left; color:var(--text); font:inherit; padding:11px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface-2); cursor:pointer; transition:border-color .15s, background .15s, transform .05s; }
+  .item::before { content:'○'; flex:none; color:var(--text-2); font-size:20px; }
+  .item.sel::before { content:'✓'; color:#93c5fd; }
+  .item:focus-visible { outline:2px solid #60a5fa; outline-offset:2px; }
+  .item:hover { border-color:var(--border-strong); }
+  .item.sel { border-color:var(--primary); background:rgba(37,99,235,.16); }
+  .item .nm { flex:1; min-width:0; overflow-wrap:anywhere; font-size:14px; }
+  .item .qt { flex:none; color:var(--text-2); font-size:13px; }
+  .hint { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6; }
+  button.primary { width:100%; margin-top:16px; padding:13px; border:0; border-radius:var(--radius-sm); background:var(--success-2); color:#fff; font-size:15px; cursor:pointer; font-weight:600; transition:background .15s, transform .05s, box-shadow .15s; box-shadow:0 8px 20px rgba(22,163,74,.28); }
+  button.primary:hover { background:#15803d; transform:translateY(-1px); box-shadow:0 10px 24px rgba(22,163,74,.36); }
+  button.primary:active { transform:translateY(0); }
+  button.blue { background:var(--primary-2); box-shadow:0 8px 20px rgba(37,99,235,.28); }
+  button.blue:hover { background:#1d4ed8; }
+  #toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(8px); background:var(--surface); color:var(--text); padding:11px 16px; border-radius:var(--radius-sm); font-size:14px; border:1px solid var(--border-strong); opacity:0; transition:opacity .2s, transform .2s var(--ease); pointer-events:none; max-width:90vw; text-align:center; box-shadow:var(--shadow-sm); }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .hidden { display:none !important; }
+  #confirmBox { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(1); background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:20px; max-width:90vw; width:340px; z-index:50; box-shadow:var(--shadow); }
+  #confirmBox:not(.hidden) { animation: popIn .18s var(--ease); }
+  @keyframes popIn { from { opacity:0; transform:translate(-50%,-50%) scale(.96); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+  #confirmBox .msg { font-size:14px; line-height:1.6; margin-bottom:16px; white-space:pre-wrap; }
+  #confirmBox .row { display:flex; gap:10px; }
+  #confirmBox button { flex:1; padding:10px; border:0; border-radius:var(--radius-sm); font-size:14px; cursor:pointer; transition:filter .15s, transform .05s; }
+  #confirmBox .ok { background:var(--success-2); color:#fff; }
+  #confirmBox .ok:hover { filter:brightness(1.08); }
+  #confirmBox .no { background:var(--surface-3); color:var(--text); }
+  #confirmBox .no:hover { background:#2b3a55; }
+  /* 拍照区 */
+  .photobox { display:flex; flex-direction:column; gap:8px; }
+  .photobox video { width:100%; border-radius:10px; background:#000; }
+  .photobox img.preview { width:100%; border-radius:10px; border:1px solid var(--border); display:block; }
+  .photobox .photoact { padding:10px; border:0; border-radius:var(--radius-sm); background:var(--surface-3); color:var(--text); cursor:pointer; font-size:13px; transition:background .15s, transform .05s; }
+  .photobox .photoact:hover { background:#2b3a55; }
+  .photobox .photoact:active { transform:translateY(1px); }
+  .photobox .photoact.on { background:var(--success-2); color:#fff; }
+  /* 细滚动条 */
+  ::-webkit-scrollbar { width:10px; height:10px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:10px; border:2px solid transparent; background-clip:content-box; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--muted); background-clip:content-box; }
+  body[data-access="checking"] .wrap, body[data-access="denied"] .wrap { display:none; }
+  #accessNotice { max-width:560px; margin:32px auto; padding:20px; }
+  #accessNotice a { color:var(--primary); }
+button:disabled, button:disabled:hover { background:#263247 !important; color:#8b98ad !important; box-shadow:none !important; cursor:not-allowed; opacity:.65; transform:none; }
+</style>
+</head>
+<body data-access="checking">
+<section id="accessNotice" role="status"><p id="accessMessage">正在确认出入库权限…</p><a href="./index.html">返回仓储平台</a></section>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">📦</div>
+    <div>
+      <h1>出入库台</h1>
+      <div class="sub">扫码 / 拍照 · 入库 · 出库 · 移库</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="in" aria-pressed="true">入库</button>
+    <button type="button" class="tab" data-tab="out" aria-pressed="false">出库</button>
+    <button type="button" class="tab" data-tab="move" aria-pressed="false">移库</button>
+  </div>
+
+  <section id="pendingOperations" class="card hidden" style="margin-bottom:14px" aria-live="polite">
+    <strong>待确认操作</strong>
+    <p class="hint">上次操作尚未确认结果。核对将使用原请求：已完成的不会重复记账，未完成的会继续提交。</p>
+    <div id="pendingList"></div>
+  </section>
+
+  <!-- 位置（两个 tab 共用） -->
+  <div class="card" style="margin-bottom:14px">
+    <label id="sharedLocLabel">操作格位</label>
+    <div class="locbox">
+      <input id="locInput" list="cellDatalist" placeholder="扫码或输入，如 WH-1-A-L01-B02" />
+      <button id="useLoc">定位</button>
+    </div>
+    <div class="locstate" id="locState"></div>
+    <div style="margin-top:10px">
+      <video id="video" class="hidden" playsinline muted></video>
+      <div class="scanbar">
+        <button id="scanBtn">📷 扫码定位</button>
+        <button id="stopCam" class="hidden">停止</button>
+      </div>
+      <div class="hint">扫码 / 拍照均需摄像头，仅在 localhost 或 HTTPS 下可用；其他环境请用「手动输入码」。</div>
+    </div>
+  </div>
+
+  <!-- 入库面板 -->
+  <div class="card" id="inPanel">
+    <label>商品名称 *</label>
+    <input id="inName" placeholder="输入或搜索，如：蓝牙耳机" autocomplete="off" />
+    <div class="suggest" id="inSuggest"></div>
+    <label>型号 / SKU（可选，可扫码，出库时凭此识别货品）</label>
+    <div class="locbox">
+      <input id="inSku" placeholder="如：BT-2024 / 供应商型号" autocomplete="off" />
+      <button id="inScanItem">📷</button>
+    </div>
+    <div class="locstate" id="inItemState"></div>
+    <label>数量</label>
+    <input id="inQty" type="number" value="1" min="1" />
+    <label>库存单位</label>
+    <input id="inUnit" maxlength="20" placeholder="新货品默认件；已有 SKU 留空沿用原单位" />
+    <label>商品照片（可选，拍一张更直观）</label>
+    <div class="photobox">
+      <button class="photoact" id="photoBtn">📸 拍摄商品照片</button>
+      <button class="photoact" id="photoChoose">选择图片 / 手机相机</button>
+      <input id="photoFile" type="file" accept="image/*" hidden />
+      <video id="photoVideo" class="hidden" playsinline muted></video>
+      <img id="photoPrev" class="preview hidden" />
+      <div class="scanbar">
+        <button class="photoact hidden" id="photoShoot">📸 拍摄</button>
+        <button class="photoact hidden" id="photoRetake">重拍</button>
+        <button class="photoact hidden" id="photoCancel">取消</button>
+      </div>
+    </div>
+    <label>备注（可选）</label>
+    <input id="inNote" placeholder="如：Type-C / 补货批次" />
+    <button class="primary" id="inSubmit">确认入库</button>
+    <div class="hint">填写SKU时按SKU匹配已有货品；未填写SKU时仅匹配同名且未编号的货品。库存按格位分别计数。拍照会作为商品封面保存。</div>
+  </div>
+
+  <!-- 出库面板 -->
+  <div class="card hidden" id="outPanel">
+    <label>选择要出库的货品</label>
+    <p class="hint">先点选下方一条货品，再填写出库数量。</p>
+    <div class="locbox" style="margin-bottom:8px">
+      <button id="outScanItem" style="flex:1">📷 扫货品码自动选中</button>
+    </div>
+    <div class="items" id="outItems"><div class="hint">请先在上方「定位」一个格位，此处会列出其中物品。</div></div>
+    <label>出库数量（不超过可用）</label>
+    <input id="outQty" type="number" value="1" min="1" disabled />
+    <button class="primary blue" id="outSubmit" disabled>确认出库</button>
+    <div class="hint">出库成功后更新库存并保留流水；任务预占的数量请到团队任务中办理。</div>
+  </div>
+
+  <!-- 移库面板 -->
+  <div class="card hidden" id="movePanel">
+    <label>源位置（从哪搬）</label>
+    <div class="locbox">
+      <input id="moveFrom" list="cellDatalist" placeholder="扫码或输入，如 WH-1-A-L01-B01" />
+      <button id="moveFromScan">📷</button>
+    </div>
+    <div class="locstate" id="moveFromState"></div>
+
+    <label>选择要移库的货品</label>
+    <p class="hint">先点选下方一条货品，再填写目标格位和数量。</p>
+    <div class="locbox" style="margin-bottom:8px">
+      <button id="moveScanItem" style="flex:1">📷 扫货品码自动选中</button>
+    </div>
+    <div class="items" id="moveItems"><div class="hint">请先定位「源位置」，此处会列出其中可移动物品。</div></div>
+
+    <label>目标位置（搬到哪）</label>
+    <div class="locbox">
+      <input id="moveTo" list="cellDatalist" placeholder="扫码或输入，如 WH-1-B-L02-B03" />
+      <button id="moveToScan">📷</button>
+    </div>
+    <div class="locstate" id="moveToState"></div>
+
+    <label>移库数量（不超过源格位现有）</label>
+    <input id="moveQty" type="number" value="1" min="1" disabled />
+    <p id="moveReadyHint" class="hint" role="status">请先选择源格位和货品，再填写目标格位及数量。</p>
+    <button class="primary blue" id="moveSubmit" disabled>确认移库</button>
+    <div class="hint">移库会扣减源格位库存、增加目标格位库存，并记一条 move 流水（源→目标），可在「流水」中核对。同一商品名跨格位独立计数。</div>
+  </div>
+</div>
+
+<datalist id="cellDatalist"></datalist>
+<div id="toast"></div>
+<div id="confirmBox" class="hidden">
+  <div class="msg" id="confirmMsg"></div>
+  <div class="row"><button class="no" id="confirmNo">取消</button><button class="ok" id="confirmOk">确认</button></div>
+</div>
+
+<script>
+// 企业级 P0：出入库台复用主页面的登录令牌（同一浏览器 localStorage），未登录则引导先登录。
+(function(){
+  const TOKEN_KEY='spatial_token';
+  const raw=window.fetch.bind(window);
+  window.fetch=function(input,init={}){
+    const t=window.SPATIAL_RUNTIME?.provider==='supos' ? '' : localStorage.getItem(TOKEN_KEY)||'';
+    if(t){ const h=new Headers(init.headers||{}); if(!h.has('Authorization')) h.set('Authorization','Bearer '+t); init=Object.assign({},init,{headers:h}); }
+    return raw(input,init).then(res=>{
+      const method=String(init.method||(input instanceof Request?input.method:'GET')).toUpperCase();
+      // 写操作无权限不代表登录失效，保留原表单和待确认请求。
+      if((res.status===401||(res.status===403&&['GET','HEAD'].includes(method)))&&!location.hash.includes('nologin')) {
+        if(window.parent!==window)window.parent.postMessage({type:'counter-auth-required'},location.origin);
+        else location.href='./index.html';
+      }
+      return res;
+    });
+  };
+})();
+const $ = (id) => document.getElementById(id);
+const counterBusiness={};
+for(const [key,id,label] of [['in','inSubmit','入库'],['out','outSubmit','出库'],['move','moveSubmit','移库']]){const host=document.createElement('div');$(id).before(host);counterBusiness[key]=window.SpatialBusiness.mount(host,{prefix:label});}
+let counterDraftChanged=false;
+document.addEventListener('input',e=>{if(e.target.matches('input,textarea,select'))counterDraftChanged=true;});
+document.addEventListener('change',e=>{if(e.target.matches('input,textarea,select'))counterDraftChanged=true;});
+window.confirmCounterClose=()=>{
+  if(window.CounterWrites?.busy){toast('正在提交，请等待结果后再关闭。',false);return false;}
+  return !counterDraftChanged||window.confirm('还有未提交的操作内容，返回后将清空。确定返回吗？');
+};
+const escapeText=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// 通知主窗口（出入库台作为子窗口打开）：操作成功后主视图自动刷新
+function notifyMain(){
+  counterDraftChanged=false;
+  try { if (window.parent !== window) window.parent.postMessage({type:'counter-updated',appPath:new URL('.',location.href).pathname,at:Date.now()},location.origin); } catch(e){}
+  try { if (window.opener && !window.opener.closed) window.opener.postMessage({ type:'counter-updated', appPath:new URL('.',location.href).pathname, at:Date.now() }, location.origin); } catch(e){}
+  try { localStorage.setItem('spatial_counter_dirty:'+new URL('.',location.href).pathname, String(Date.now())); } catch(e){}
+}
+window.addEventListener('beforeunload', notifyMain);
+let locValid = false;
+let locCode = '';
+let cells = new Set();
+let scanning = false, stream = null, rafId = null, camMode = null, photoData = null, scanFill = 'locInput';
+let scanMode = 'loc', scanItemKind = null; // scanMode: 'loc' 填位置 / 'item' 识别货品
+
+const roomScope=new URLSearchParams(location.search).get('room');
+const scopeSelect=document.createElement('select');
+scopeSelect.setAttribute('aria-label','格位范围');
+scopeSelect.innerHTML=roomScope?'<option value="room">当前库区</option><option value="all">全部库区（跨库区操作）</option>':'<option value="all">全部库区</option>';
+const scopeLabel=document.createElement('label');scopeLabel.textContent='格位范围';scopeLabel.append(scopeSelect);
+$('sharedLocLabel').before(scopeLabel);
+let availableCells=[];
+function fillCellSuggestions(){
+  const dl=$('cellDatalist');dl.replaceChildren();
+  for(const c of availableCells){
+    if(scopeSelect.value==='room'&&!c.loc_code.startsWith(roomScope+'-'))continue;
+    const opt=document.createElement('option');opt.value=c.loc_code;dl.appendChild(opt);
+  }
+}
+scopeSelect.onchange=fillCellSuggestions;
+// 校验仍允许显式输入跨库区码，建议列表默认当前库区。
+
+const cellsReady=fetch('/api/cells').then(r=>r.json()).then(arr=>{
+  availableCells=arr||[];
+  (arr||[]).forEach(c=>{
+    cells.add(c.loc_code);
+    
+  });
+  fillCellSuggestions();
+  const params=new URLSearchParams(location.search),loc=params.get('loc'),mode=params.get('mode');
+  const tab=['in','out','move'].includes(mode)?mode:'in';
+  document.querySelector('.tab[data-tab="'+tab+'"]').click();
+  if(loc&&cells.has(loc)){
+    if(tab==='move'){$('moveFrom').value=loc;validateMoveLoc('moveFrom');}
+    else{$('locInput').value=loc;useLoc();}
+  }
+}).catch(()=>{});
+
+function toast(msg, ok=true){ const t=$('toast'); t.textContent=msg; t.style.borderColor = ok?'#16a34a':'#b91c1c'; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400); }
+
+async function refreshPendingOperations(){
+  try{
+    const records=(await window.CounterWrites.list()).filter(r=>r.path.startsWith('/api/counter/')),list=$('pendingList');
+    list.replaceChildren();$('pendingOperations').classList.toggle('hidden',!records.length);
+    for(const record of records){
+      const row=document.createElement('div'),summary=document.createElement('p'),button=document.createElement('button');
+      const kind=record.path.split('/').pop(),body=record.body;
+      summary.textContent=`${{inbound:'入库',outbound:'出库',move:'移库'}[kind]} · ${body.name||body.item_id} · 数量 ${body.qty} · ${body.loc_code||body.from_loc}${body.to_loc?' → '+body.to_loc:''} · ${new Date(record.at).toLocaleString()}`;
+      button.textContent='核对结果';
+      button.onclick=async()=>{
+        if(!(await ioConfirm('按原内容核对这笔操作？已记账的不会重复执行；尚未完成的将继续提交。')))return;
+        button.disabled=true;
+        try{
+          const response=await window.CounterWrites.retry(record.path),result=await response.json();
+          if(!response.ok)throw Error(result.error||'核对失败，请稍后重试');
+          notifyMain();toast(result.replayed?'已确认：此前操作已完成，未重复记账':'操作已完成');
+          // 重载格位和货品列表，避免沿用核对前的库存数量。
+          location.reload();
+        }catch(error){toast(error.message,false);button.disabled=false;await refreshPendingOperations();}
+      };
+      row.append(summary,button);list.append(row);
+    }
+  }catch(error){$('pendingOperations').classList.remove('hidden');$('pendingList').textContent='无法读取待确认操作：'+error.message;}
+}
+window.CounterWrites.onChange=refreshPendingOperations;
+refreshPendingOperations();
+// 自定义确认弹窗（替代原生 confirm，避免深色主题割裂 / 阻塞线程）
+function ioConfirm(msg){
+  return new Promise((resolve)=>{
+    const box=$('confirmBox'), m=$('confirmMsg'), ok=$('confirmOk'), no=$('confirmNo');
+    m.textContent=msg; box.classList.remove('hidden');
+    const done=(v)=>{ box.classList.add('hidden'); ok.onclick=null; no.onclick=null; resolve(v); };
+    ok.onclick=()=>done(true); no.onclick=()=>done(false);
+  });
+}
+
+// ---- Tab 切换 ----
+document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(t=>{t.classList.remove('active');t.setAttribute('aria-pressed','false');});
+  tab.classList.add('active');tab.setAttribute('aria-pressed','true');
+  const t = tab.dataset.tab;
+  // 首次切到移库时沿用当前格位和已选货品，不覆盖用户已经填写的移库源。
+  const carried=t==='move' && locValid && !$('moveFrom').value.trim()
+    ? {item:outSelItem,qty:$('outQty').value,loc:locCode} : null;
+  $('sharedLocLabel').classList.toggle('hidden',t==='move');
+  $('locInput').closest('.locbox').classList.toggle('hidden',t==='move');
+  $('locState').classList.toggle('hidden',t==='move');
+  $('scanBtn').classList.toggle('hidden',t==='move');
+  $('inPanel').classList.toggle('hidden', t!=='in');
+  $('outPanel').classList.toggle('hidden', t!=='out');
+  $('movePanel').classList.toggle('hidden', t!=='move');
+  if(t==='out' && locValid) loadCellItems(locCode);
+  else if(t==='in' || t==='out') clearOutItems();
+  if(t==='move' && carried){
+    $('moveFrom').value=carried.loc;moveFromCode=carried.loc;
+    setMoveState('moveFrom','已定位源：'+moveFromCode,true);loadMoveItems(moveFromCode,false,carried);
+  }else if(t==='move' && moveFromCode) loadMoveItems(moveFromCode,true);
+});
+
+// Esc 从内向外退出；父页面统一处理未提交内容的确认。
+document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape')return;
+  event.preventDefault();event.stopPropagation();
+  if(!$('confirmBox').classList.contains('hidden')) { $('confirmNo').click(); return; }
+  if(stream || scanning) { stopCam(); return; }
+  const suggestions=$('inSuggest');
+  if(suggestions.childElementCount && getComputedStyle(suggestions).display!=='none') { suggestions.style.display='none'; return; }
+  if(window.parent!==window)window.parent.postMessage({type:'counter-close-request'},location.origin);
+});
+
+// ---- 位置校验 ----
+function useLoc(){
+  const v = $('locInput').value.trim();
+  if(!v){ setLocState('请输入或扫码获取位置码', false); return; }
+  if(!cells.has(v)){ setLocState('位置码无效（不在已知格位中）', false); locValid=false; locCode=''; clearOutItems(); return; }
+  locValid=true; locCode=v; setLocState('已定位：'+v, true);
+  if(document.querySelector('.tab.active').dataset.tab==='out') loadCellItems(v);
+  else clearOutItems();
+}
+function setLocState(msg, ok){ const s=$('locState'); s.textContent=msg; s.className='locstate '+(ok?'ok':'err'); }
+$('useLoc').onclick=useLoc;
+$('locInput').addEventListener('keydown', e=>{ if(e.key==='Enter') useLoc(); });
+$('locInput').addEventListener('input',()=>{locValid=false;locCode='';clearOutItems();setLocState('请点击定位确认新格位',null);});
+
+// ---- 摄像头：扫码定位 与 拍照 共用，同一时刻只有一个流 ----
+async function openCam(mode){
+  stopCam();
+  camMode = mode;
+  if(!navigator.mediaDevices?.getUserMedia){toast('当前连接无法调用实时摄像头。照片可用“选择图片 / 手机相机”，扫码请使用 HTTPS 访问。',false);return;}
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } });
+    if(mode==='scan'){
+      const v=$('video'); v.classList.remove('hidden'); $('stopCam').classList.remove('hidden');
+      v.srcObject=stream; await v.play(); scanLoop();
+    } else {
+      const v=$('photoVideo'); v.classList.remove('hidden');
+      $('photoShoot').classList.remove('hidden'); $('photoCancel').classList.remove('hidden');
+      $('photoBtn').classList.add('hidden');
+      v.srcObject=stream; await v.play();
+    }
+  }catch(err){ toast('无法打开摄像头：'+err.message, false); }
+}
+function stopCam(){
+  scanning=false;
+  if(rafId) cancelAnimationFrame(rafId); rafId=null;
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  camMode=null;
+  $('video').classList.add('hidden'); $('stopCam').classList.add('hidden');
+  $('photoVideo').classList.add('hidden'); $('photoShoot').classList.add('hidden'); $('photoCancel').classList.add('hidden');
+  $('photoBtn').classList.remove('hidden');
+}
+
+// 扫码模式：循环解码，按 scanMode 决定填位置还是识别货品
+$('scanBtn').onclick=()=>{ scanFill='locInput'; scanMode='loc'; openCam('scan'); };
+$('stopCam').onclick=stopCam;
+function scanLoop(){
+  if(camMode!=='scan') return;
+  const v=$('video');
+  if(v.readyState>=2){
+    const ratio = (v.videoWidth && v.videoHeight) ? v.videoHeight/v.videoWidth : 0.75;
+    const cw=320, ch=Math.max(1, Math.round(cw*ratio));
+    const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+    const ctx=cv.getContext('2d'); ctx.drawImage(v,0,0,cw,ch);
+    const img=ctx.getImageData(0,0,cw,ch);
+    const res = (typeof jsQR==='function') ? jsQR(img.data,cw,ch) : null;
+    if(res && res.data && res.data.trim().length>=1){
+      stopCam();
+      const code=res.data.trim();
+      if(scanMode==='item'){ handleItemScan(code); return; }
+      if(scanFill==='locInput'){ $('locInput').value=code; useLoc(); }
+      else { $(scanFill).value=code; validateMoveLoc(scanFill); }
+      return;
+    }
+  }
+  rafId=requestAnimationFrame(scanLoop);
+}
+
+// 扫货品码：按 sku/erp_code/id 解析货品，再按场景回填或选中
+async function handleItemScan(code){
+  try{
+    const r=await fetch('/api/items/by-code?code='+encodeURIComponent(code));
+    if(!r.ok){ toast('未找到匹配货品（'+code+'）', false); return; }
+    const it=await r.json();
+    if(scanItemKind==='in'){
+      $('inName').value=it.name||'';
+      $('inSku').value=it.sku||code;
+      $('inUnit').value=it.unit||'件';
+      setInItemState('已匹配现有货品：'+(it.name||'')+(it.sku?'（'+it.sku+'）':''), true);
+    } else if(scanItemKind==='out'){
+      const el=[...$('outItems').querySelectorAll('.item')].find(e=>e.dataset.id===it.item_id);
+      if(el){ el.click(); toast('已扫描并选中：'+(it.name||'')); }
+      else toast('该格位没有此货品（'+(it.name||code)+'）', false);
+    } else if(scanItemKind==='move'){
+      const el=[...$('moveItems').querySelectorAll('.item')].find(e=>e.dataset.id===it.item_id);
+      if(el){ el.click(); toast('已扫描并选中：'+(it.name||'')); }
+      else toast('该源格位没有此货品（'+(it.name||code)+'）', false);
+    }
+  }catch(e){ toast('扫码识别失败：'+e.message, false); }
+}
+function setInItemState(msg, ok){ const s=$('inItemState'); s.textContent=msg; s.className='locstate '+(ok?'ok':'err'); }
+$('inScanItem').onclick=()=>{ scanMode='item'; scanItemKind='in'; openCam('scan'); };
+$('outScanItem').onclick=()=>{ if(!locValid){ toast('请先定位格位', false); return; } scanMode='item'; scanItemKind='out'; openCam('scan'); };
+$('moveScanItem').onclick=()=>{ if(!moveFromCode){ toast('请先定位源位置', false); return; } scanMode='item'; scanItemKind='move'; openCam('scan'); };
+
+// 拍照模式：拍摄商品快照
+$('photoBtn').onclick=()=>openCam('photo');
+$('photoShoot').onclick=()=>{
+  const v=$('photoVideo');
+  const ratio=(v.videoWidth&&v.videoHeight)?v.videoHeight/v.videoWidth:0.75;
+  const cw=480, ch=Math.max(1, Math.round(cw*ratio));
+  const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+  cv.getContext('2d').drawImage(v,0,0,cw,ch);
+  photoData=cv.toDataURL('image/jpeg',0.7);
+  $('photoPrev').src=photoData; $('photoPrev').classList.remove('hidden');
+  $('photoShoot').classList.add('hidden'); $('photoCancel').classList.add('hidden'); $('photoRetake').classList.remove('hidden');
+  // 关摄像头，保留预览
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } if(rafId) cancelAnimationFrame(rafId); rafId=null;
+  $('photoVideo').classList.add('hidden');
+};
+$('photoRetake').onclick=()=>{ photoData=null; $('photoPrev').classList.add('hidden'); openCam('photo'); };
+$('photoCancel').onclick=()=>{ stopCam(); }; // 取消仅关摄像头，已拍预览保留
+$('photoChoose').onclick=()=>$('photoFile').click();
+$('photoFile').onchange=async()=>{
+  const file=$('photoFile').files[0];if(!file)return;
+  const url=URL.createObjectURL(file);
+  try{
+    const img=new Image();img.src=url;await img.decode();
+    const scale=Math.min(1,960/Math.max(img.naturalWidth,img.naturalHeight));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    stopCam();photoData=canvas.toDataURL('image/jpeg',0.8);$('photoPrev').src=photoData;$('photoPrev').classList.remove('hidden');
+  }catch{toast('无法读取这张图片，请选择 JPG 或 PNG 图片。',false);}
+  finally{URL.revokeObjectURL(url);$('photoFile').value='';}
+};
+
+// ---- 入库：搜索联想 ----
+let inTimer=null,inSearchVersion=0;
+$('inName').addEventListener('input', ()=>{
+  const q=$('inName').value.trim(); const box=$('inSuggest');
+  const version=++inSearchVersion;
+  clearTimeout(inTimer);
+  if(q.length<1){ box.style.display='none'; return; }
+  inTimer=setTimeout(async ()=>{
+    try{
+      const r=await fetch('/api/search?q='+encodeURIComponent(q)).then(x=>x.json());
+      if(version!==inSearchVersion)return;
+      const items=[...new Map((r||[]).map(item=>[JSON.stringify([item.name,item.sku,item.unit]),item])).values()];
+      if(!items.length){ box.style.display='none'; return; }
+      box.replaceChildren();
+      for(const item of items.slice(0,8)){
+        const option=document.createElement('div');option.textContent=`${item.name} · ${item.sku||'未编号'} · ${item.unit||'件'}`;
+        option.setAttribute('role','button');option.tabIndex=0;
+        const choose=()=>{$('inName').value=item.name;$('inSku').value=item.sku||'';$('inUnit').value=item.unit||'件';box.style.display='none';setInItemState('已选择已有货品：'+item.name,true);};
+        option.onclick=choose;option.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose();}};box.append(option);
+      }
+      box.style.display='block';
+    }catch(e){ box.style.display='none'; }
+  }, 200);
+});
+
+$('inSubmit').onclick=async ()=>{
+  if(!locValid){ toast('请先定位有效位置', false); return; }
+  const name=$('inName').value.trim();
+  if(!name){ toast('请填写商品名称', false); return; }
+  const qty=Number($('inQty').value);
+  if(!Number.isFinite(qty)||qty<=0){ toast('请输入大于 0 的有效数量', false); return; }
+  const note=$('inNote').value.trim();
+  const sku=$('inSku').value.trim();
+  const unit=$('inUnit').value.trim();
+  const business=counterBusiness.in.read();
+  if(!(await ioConfirm(`确认入库？\n商品：${name}\n数量：${qty} ${unit||'（沿用已有单位，新货品为件）'}\n目标位置：${locCode}${sku?'\nSKU：'+sku:''}${Object.keys(business).length?'\n'+window.SpatialBusiness.describe(business):''}`))) return;
+  try{
+    const body={ name, qty, loc_code:locCode, note, unit,...business };
+    if(sku) body.sku=sku;
+    if(photoData) body.photo=photoData;
+    const r=await fetch('/api/counter/inbound',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    if(!r.ok){ toast(await window.CounterWrites.failureMessage('/api/counter/inbound',j.error||'入库失败'), false); return; }
+    toast(`已入库 ${j.added} ${j.unit} · ${j.name}（该格位共 ${j.qty}）${photoData?' · 已附照片':''}`);
+    notifyMain();
+    if(!counterConvenience?.continuous()){$('inName').value='';$('inSku').value='';$('inUnit').value='';setInItemState('',null);}
+    $('inNote').value='';$('inQty').value='1';$('inSuggest').style.display='none';
+    counterConvenience?.refresh();$('inQty').focus();$('inQty').select();
+    // 重置拍照
+    photoData=null; $('photoPrev').classList.add('hidden'); $('photoRetake').classList.add('hidden'); $('photoBtn').classList.remove('hidden');
+  }catch(e){ toast(await window.CounterWrites.failureMessage('/api/counter/inbound',e.message), false); }
+};
+
+// ---- 出库：列出物品并选择 ----
+let outItemsVersion=0;
+async function loadCellItems(code,preserve=false){
+  if(!preserve)clearOutItems();
+  const version=++outItemsVersion;
+  try{
+    const response=await fetch('/api/cells/'+encodeURIComponent(code)+'/items');if(!response.ok)throw Error('无法读取库存');
+    const r=await response.json();if(version!==outItemsVersion||code!==locCode)return;
+    if(preserve&&!$('confirmBox').classList.contains('hidden'))throw Error('请先结束确认操作');
+    const chosen=preserve?outSelItem:null,draft=$('outQty').value;
+    outSelItem=null;$('outQty').disabled=true;$('outSubmit').disabled=true;
+    const box=$('outItems');
+    if(!r || !r.length){ box.innerHTML='<div class="hint">该格位暂无在库物品。</div>'; return; }
+    box.innerHTML=r.map(it=>`<button type="button" class="item" aria-pressed="false" data-id="${escapeText(it.item_id)}" data-qty="${it.available_qty??it.qty}" data-unit="${escapeText(it.unit||'件')}"><span class="nm">${escapeText(it.name)}${it.note?' · '+escapeText(it.note):''}${it.reserved_qty?'<small>任务预占 '+it.reserved_qty+' · 可用 '+it.available_qty+'</small>':''}</span><span class="qt">在库 ${it.qty} ${escapeText(it.unit||'件')}</span></button>`).join('');
+      box.querySelectorAll('.item').forEach(el=>el.onclick=()=>{
+        box.querySelectorAll('.item').forEach(x=>{x.classList.remove('sel');x.setAttribute('aria-pressed','false');});
+        el.classList.add('sel');el.setAttribute('aria-pressed','true');
+        outSelItem=el.dataset.id;
+        outSelName=el.querySelector('.nm').textContent.trim(); outSelUnit=el.dataset.unit;
+        const max=Number(el.dataset.qty);
+        $('outQty').max=max; $('outQty').value=Math.min(1,max); $('outQty').disabled=max<=0; $('outSubmit').disabled=max<=0;
+      });
+    if(chosen){const item=[...box.querySelectorAll('.item')].find(el=>el.dataset.id===chosen);if(item){item.click();$('outQty').value=draft;$('outSubmit').disabled=!(Number(draft)>0&&Number(draft)<=Number($('outQty').max));}}
+  }catch(e){if(preserve)throw e;if(version===outItemsVersion)$('outItems').textContent='加载失败：'+e.message;}
+}
+let outSelItem=null, outSelName='', outSelUnit='件';
+function clearOutItems(){outItemsVersion++;outSelItem=null;$('outQty').disabled=true;$('outSubmit').disabled=true; $('outItems').innerHTML='<div class="hint">请先在上方「定位」一个格位，此处会列出其中物品。</div>'; }
+$('outQty').addEventListener('input',()=>{$('outSubmit').disabled=!(outSelItem&&Number($('outQty').value)>0&&Number($('outQty').value)<=Number($('outQty').max));});
+
+$('outSubmit').onclick=async ()=>{
+  if(!locValid){ toast('请先定位有效位置', false); return; }
+  if(!outSelItem){ toast('请选择要出库的物品', false); return; }
+  const max=Number($('outQty').max);
+  const qty=Number($('outQty').value);
+  if(!Number.isFinite(qty)||qty<=0){ toast('请输入大于 0 的有效数量', false); return; }
+  if(qty>max){ toast('出库数量不能超过现有库存（'+max+'）', false); return; }
+  const business=counterBusiness.out.read();
+  if(!(await ioConfirm(`确认出库？\n商品：${outSelName||'(未知)'}\n数量：${qty} ${outSelUnit}\n位置：${locCode}\n当前可用：${max} ${outSelUnit}${Object.keys(business).length?'\n'+window.SpatialBusiness.describe(business):''}`))) return;
+  try{
+    const r=await fetch('/api/counter/outbound',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loc_code:locCode, item_id:outSelItem, qty,...business})});
+    const j=await r.json();
+    if(!r.ok){ toast(await window.CounterWrites.failureMessage('/api/counter/outbound',j.error||'出库失败'), false); return; }
+    toast(`已出库 ${j.taken} ${outSelUnit}（剩余 ${j.remain}）`);
+    notifyMain();
+    $('outQty').value='1';loadCellItems(locCode,true);
+  }catch(e){ toast(await window.CounterWrites.failureMessage('/api/counter/outbound',e.message), false); }
+};
+
+// ---- 移库：源/目标位置 + 选物品 + 确认 ----
+let moveFromCode='', moveToCode='', moveSelItem=null, moveSelName='', moveSelUnit='件';
+let moveItemsVersion=0;
+function updateMoveReady(){
+  const qty=Number($('moveQty').value), max=Number($('moveQty').max);
+  $('moveQty').disabled=!moveSelItem;
+  $('moveReadyHint').textContent=!moveFromCode?'请选择有效的源格位':!moveSelItem?'请选择要移动的货品':!moveToCode?'请选择有效的目标格位':moveFromCode===moveToCode?'目标格位不能与源格位相同':!(qty>0&&qty<=max)?'请输入大于 0 且不超过可用库存的数量':'已准备好，请核对货品、目标格位和数量后确认';
+  $('moveSubmit').disabled=!(moveFromCode && moveToCode && moveFromCode!==moveToCode && moveSelItem && Number.isFinite(qty) && qty>0 && qty<=max);
+}
+function setMoveState(which, msg, ok){
+  const s=$(which==='moveFrom'?'moveFromState':'moveToState');
+  s.textContent=msg; s.className='locstate '+(ok===null?'':(ok?'ok':'err'));
+}
+function validateMoveLoc(which){
+  const isFrom = which==='moveFrom';
+  const code=$(which).value.trim();
+  if(!code || !cells.has(code)){
+    setMoveState(which,code?'位置码无效（不在已知格位中）':'',code?false:null);
+    if(isFrom){ moveFromCode=''; clearMoveItems(); } else moveToCode='';
+    updateMoveReady(); return;
+  }
+  if(isFrom){ moveFromCode=code; setMoveState('moveFrom','已定位源：'+code,true); loadMoveItems(code); }
+  else { moveToCode=code; setMoveState('moveTo','已定位目标：'+code,true); }
+  updateMoveReady();
+}
+$('moveFrom').addEventListener('keydown', e=>{ if(e.key==='Enter') validateMoveLoc('moveFrom'); });
+$('moveTo').addEventListener('keydown', e=>{ if(e.key==='Enter') validateMoveLoc('moveTo'); });
+// 这两个输入框没有「定位」按钮，原来只能按回车或扫码才生效 ——
+// 手动输入完点别处毫无反应，面板看起来像坏的。补上失焦（change）即校验。
+// 输入时只撤销旧定位，不在打字过程中显示错误。
+for(const which of ['moveFrom','moveTo']) $(which).addEventListener('input',()=>{
+  if(which==='moveFrom'){ moveFromCode=''; clearMoveItems(); } else moveToCode='';
+  setMoveState(which,'',null); updateMoveReady();
+});
+$('moveQty').addEventListener('input',updateMoveReady);
+$('moveFrom').addEventListener('change', ()=>validateMoveLoc('moveFrom'));
+$('moveTo').addEventListener('change', ()=>validateMoveLoc('moveTo'));
+$('moveFromScan').onclick=()=>{ scanFill='moveFrom'; openCam('scan'); };
+$('moveToScan').onclick=()=>{ scanFill='moveTo'; openCam('scan'); };
+
+async function loadMoveItems(code,preserve=false,selection=null){
+  if(!preserve)clearMoveItems();
+  const version=++moveItemsVersion;
+  try{
+    const response=await fetch('/api/cells/'+encodeURIComponent(code)+'/items');if(!response.ok)throw Error('无法读取库存');
+    const r=await response.json();
+    if(version!==moveItemsVersion || code!==moveFromCode) return;
+    if(preserve&&!$('confirmBox').classList.contains('hidden'))throw Error('请先结束确认操作');
+    const chosen=selection?.item||(preserve?moveSelItem:null),draft=selection?.qty??$('moveQty').value;moveSelItem=null;updateMoveReady();
+    const box=$('moveItems');
+    if(!r || !r.length){ box.innerHTML='<div class="hint">该源格位暂无在库物品。</div>'; return; }
+    box.innerHTML=r.map(it=>`<button type="button" class="item" aria-pressed="false" data-id="${escapeText(it.item_id)}" data-qty="${it.available_qty??it.qty}" data-unit="${escapeText(it.unit||'件')}"><span class="nm">${escapeText(it.name)}${it.note?' · '+escapeText(it.note):''}${it.reserved_qty?'<small>任务预占 '+it.reserved_qty+' · 可用 '+it.available_qty+'</small>':''}</span><span class="qt">在库 ${it.qty} ${escapeText(it.unit||'件')}</span></button>`).join('');
+      box.querySelectorAll('.item').forEach(el=>el.onclick=()=>{
+        box.querySelectorAll('.item').forEach(x=>{x.classList.remove('sel');x.setAttribute('aria-pressed','false');});
+        el.classList.add('sel');el.setAttribute('aria-pressed','true');moveSelItem=el.dataset.id;
+        moveSelName=el.querySelector('.nm').textContent.trim(); moveSelUnit=el.dataset.unit;
+        const max=Number(el.dataset.qty);
+        $('moveQty').max=max; $('moveQty').value=Math.min(1,max); updateMoveReady();
+      });
+    if(chosen){const item=[...box.querySelectorAll('.item')].find(el=>el.dataset.id===chosen);if(item){item.click();$('moveQty').value=draft;updateMoveReady();}}
+  }catch(e){if(preserve)throw e; if(version===moveItemsVersion && code===moveFromCode) $('moveItems').innerHTML='<div class="hint">加载失败：'+escapeText(e.message)+'</div>'; }
+}
+function clearMoveItems(){
+  moveItemsVersion++; moveSelItem=null; moveSelName='';
+  $('moveQty').value=''; $('moveQty').max=''; updateMoveReady();
+  $('moveItems').innerHTML='<div class="hint">请先定位「源位置」，此处会列出其中可移动物品。</div>';
+}
+
+$('moveSubmit').onclick=async ()=>{
+  if(!moveFromCode){ toast('请先定位有效源位置', false); return; }
+  if(!moveToCode){ toast('请先定位有效目标位置', false); return; }
+  if(moveFromCode===moveToCode){ toast('源位置与目标位置不能相同', false); return; }
+  if(!moveSelItem){ toast('请选择要移动的物品', false); return; }
+  const max=Number($('moveQty').max);
+  const qty=Number($('moveQty').value);
+  if(!Number.isFinite(qty)||qty<=0){ toast('请输入大于 0 的有效数量', false); return; }
+  if(qty>max){ toast('移动数量不能超过源格位现有库存（'+max+'）', false); return; }
+  const business=counterBusiness.move.read();
+  if(!(await ioConfirm(`确认移库？\n商品：${moveSelName||'(未知)'}\n数量：${qty} ${moveSelUnit}\n${moveFromCode} → ${moveToCode}${Object.keys(business).length?'\n'+window.SpatialBusiness.describe(business):''}`))) return;
+  try{
+    const r=await fetch('/api/counter/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_id:moveSelItem, qty, from_loc:moveFromCode, to_loc:moveToCode,...business})});
+    const j=await r.json();
+    if(!r.ok){ toast(await window.CounterWrites.failureMessage('/api/counter/move',j.error||'移库失败'), false); return; }
+    toast(`已移动 ${j.moved} ${moveSelUnit}：${moveFromCode} → ${moveToCode}`);
+    notifyMain();
+    $('moveQty').value='1';loadMoveItems(moveFromCode,true); // 保留当前作业，刷新源格位余量。
+  }catch(e){ toast(await window.CounterWrites.failureMessage('/api/counter/move',e.message), false); }
+};
+
+// 独立地址也先校验角色，避免只读用户填写后才收到拒绝并留下待确认操作。
+// 服务端仍逐次鉴权；此处只负责入口体验，不代替服务端权限检查。
+let stopCounterLive,counterStatus;
+let counterConvenience,counterHelp,counterRooms=[],counterTaskInitialized=false;
+async function applyAssistantDraft(params) {
+  await cellsReady;
+  const itemId=params.get('item_id'),qty=Number(params.get('qty')),loc=params.get('loc'),kind=params.get('mode');
+  if(!itemId||!Number.isFinite(qty)||qty<=0||!cells.has(loc))throw Error('草稿不完整或格位已改变，请重新核对');
+  if(kind==='in') {
+    const response=await fetch('/api/items/by-code?code='+encodeURIComponent(itemId));
+    if(!response.ok)throw Error('货品已改变，请重新生成草稿');const item=await response.json();
+    if(item.item_id!==itemId)throw Error('货品标识已改变，请重新核对');
+    $('locInput').value=loc;useLoc();$('inName').value=item.name;$('inSku').value=item.sku||'';$('inUnit').value=item.unit||'件';$('inQty').value=String(qty);setInItemState('已带入操作草稿，请核对后确认',true);
+  }else {
+    const box=kind==='move'?$('moveItems'):$('outItems');
+    if(kind==='move') {
+      $('moveFrom').value=loc;moveFromCode=loc;setMoveState('moveFrom','已定位源：'+loc,true);await loadMoveItems(loc);
+      $('moveTo').value=params.get('to')||'';validateMoveLoc('moveTo');
+    }else {$('locInput').value=loc;locCode=loc;locValid=true;setLocState('已定位：'+loc,true);await loadCellItems(loc);}
+    const choice=[...box.querySelectorAll('.item')].find(row=>row.dataset.id===itemId);
+    if(!choice)throw Error('源格位已没有这件货品，请重新生成草稿');choice.click();
+    $(kind==='move'?'moveQty':'outQty').value=String(qty);if(kind==='move')updateMoveReady();
+  }
+  toast('操作草稿已带入，核对数量和位置后再确认。');
+}
+window.resumeCounterAccess=()=>fetch('/api/auth/me').then(async response=>{
+  stopCounterLive?.();counterStatus?.remove();
+  if(!response.ok)throw Error('无法确认登录状态，请返回仓储平台重新登录。');
+  const {user,mode}=await response.json();
+  const allowed=['admin','operator'].includes(user?.role)&&mode!=='integration';
+  document.body.dataset.access=allowed?'allowed':'denied';
+  $('accessNotice').hidden=allowed;
+  if(allowed){
+    if(!counterHelp){
+      const {mountCounterHelp}=await import('./counter-help.mjs');
+      counterHelp=mountCounterHelp({userId:user.id,getState:()=>{
+        const mode=document.querySelector('.tab.active').dataset.tab;
+        const qty=Number($(mode==='in'?'inQty':mode==='out'?'outQty':'moveQty').value);
+        return {mode,loc:mode==='move'?moveFromCode:locCode,item:mode==='in'?$('inName').value.trim():mode==='out'?outSelItem:moveSelItem,
+          to:moveToCode,qtyValid:Number.isFinite(qty)&&qty>0&&(mode==='in'||qty<=Number($(mode==='out'?'outQty':'moveQty').max))};
+      }});
+    }
+    const {mountLiveInventory}=await import('./live-inventory.mjs');
+    const response=await fetch('/api/rooms');if(!response.ok)throw Error('无法读取库区');const rooms=await response.json();
+    counterRooms=rooms;
+    if(!counterConvenience){
+      const {mountCounterConvenience}=await import('./counter-convenience.mjs');
+      counterConvenience=mountCounterConvenience({
+        getRoom:()=>{const code=document.querySelector('.tab.active').dataset.tab==='move'?moveFromCode:locCode;return counterRooms.find(r=>code.startsWith(r.loc_code+'-'))?.loc_code||roomScope||counterRooms[0]?.loc_code||'';},
+        getInbound:()=>({sku:$('inSku').value.trim(),qty:$('inQty').value,unit:$('inUnit').value.trim()||'件'}),
+        getMove:()=>({from_loc:moveFromCode,item_id:moveSelItem||'',qty:$('moveQty').value,unit:moveSelUnit}),
+        chooseInbound:item=>{$('inName').value=item.name;$('inSku').value=item.sku||'';$('inUnit').value=item.unit||'件';setInItemState('已选择 '+item.name,true);$('inQty').focus();$('inQty').select();},
+        chooseDestination:(kind,code)=>{if(kind==='in'){$('locInput').value=code;useLoc();}else{$('moveTo').value=code;validateMoveLoc('moveTo');}},message:toast,
+      });
+    }else counterConvenience.refresh();
+    const taskItem=new URLSearchParams(location.search).get('item');
+    const draftParams=new URLSearchParams(location.search);
+    if(draftParams.has('item_id')&&!counterTaskInitialized){await applyAssistantDraft(draftParams);counterTaskInitialized=true;}
+    else if(taskItem&&!counterTaskInitialized){scanItemKind='in';await handleItemScan(taskItem);counterTaskInitialized=true;}
+    const status=document.createElement('p');counterStatus=status;status.className='hint';status.setAttribute('role','status');$('pendingOperations').before(status);
+    stopCounterLive=mountLiveInventory({getRoom:()=>{const code=document.querySelector('.tab.active').dataset.tab==='move'?moveFromCode:locCode;return rooms.find(r=>code.startsWith(r.loc_code+'-'))?.loc_code||roomScope||rooms[0]?.loc_code||'';},
+      isBusy:()=>!$('confirmBox').classList.contains('hidden'),status:text=>status.textContent=text,
+      onAccessLost:()=>{document.body.dataset.access='denied';$('accessNotice').hidden=false;$('accessMessage').textContent='登录或权限已变化，请返回平台重新登录。';},
+      refresh:async()=>{const tab=document.querySelector('.tab.active').dataset.tab;if(tab==='out'&&locValid)await loadCellItems(locCode,true);if(tab==='move'&&moveFromCode)await loadMoveItems(moveFromCode,true);}
+    });
+  }
+  if(!allowed)$('accessMessage').textContent=mode==='integration'
+    ?'当前为外部库存模式，请在 ERP/WMS 中办理出入库。'
+    :'当前账号没有出入库权限，请返回仓储平台查看库存。';
+}).catch(error=>{
+  document.body.dataset.access='denied';
+  $('accessMessage').textContent=error.message||'权限检查失败，请返回仓储平台重试。';
+});
+window.resumeCounterAccess();
+</script>
+</body>
+</html>

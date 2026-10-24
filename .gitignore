@@ -1,0 +1,35 @@
+# 自签名开发证书（仅本地 HTTPS，含本机 IP，勿提交）
+certs/
+
+# 业务数据：SQLite 库 + WAL + 自动备份（含全部仓储/账号/审计，严禁入库）
+data/
+knowledge-data/
+
+# 上传资产（写实 GLB 等）
+uploads/
+
+# 环境变量 / 密钥
+.env
+.env.*
+
+# 临时日志
+_api_*.log
+node_modules/
+*.log
+*.err
+.workbuddy/
+_port*.txt
+_shot*.png
+
+backups/
+releases/
+tools/out/
+
+# 升级验收临时归档及本地模型权重，源码仓库不提交大模型文件。
+.upgrade-*
+output/assistant-runtime/models/
+
+# 录制素材、实测输出及旧参赛材料不随公开源码提交。
+output/
+.roadshow-*/
+**/__pycache__/

@@ -1,0 +1,11 @@
+# 演示适配器映射（控制台打印，不联网）。键名只需覆盖待处理的事件类型即可。
+# 注意：事件类型用「点号」与 db.mjs 的 emit() 完全对齐。
+system: console-demo
+description: 本地演示用，验证 outbox → adapter → 标记已发 全链路
+item.created.name: name
+item.created.qty: qty
+item.updated.name: name
+item.deleted.item_id: id
+inventory.changed.node_id: node_id
+inventory.changed.qty: qty
+furniture.created.furn_code: furn_code

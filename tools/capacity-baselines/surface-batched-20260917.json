@@ -1,0 +1,65 @@
+{
+  "baseline": "scene-current-20260917.json",
+  "environment": "Windows i7-7700, Chromium 152, 960x540, pixelRatio=1",
+  "scope": "远景、每架100格、每格8条库存、60帧采样；真实生成器，不含HTTP/鉴权/完整应用UI",
+  "batch_cell_surfaces": true,
+  "samples": [
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 5000,
+      "buildMs": 247,
+      "firstRenderMs": 197,
+      "frameP95Ms": 21,
+      "renderP95Ms": 16.3,
+      "drawCalls": 300,
+      "memory": {
+        "geometries": 351,
+        "textures": 50
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    },
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 10000,
+      "buildMs": 393,
+      "firstRenderMs": 189,
+      "frameP95Ms": 26.3,
+      "renderP95Ms": 24.7,
+      "drawCalls": 600,
+      "memory": {
+        "geometries": 701,
+        "textures": 100
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    },
+    {
+      "surfaceMode": "远景空格轮廓",
+      "stockPerCell": 8,
+      "batchInventory": true,
+      "cells": 10000,
+      "buildMs": 350,
+      "firstRenderMs": 133,
+      "frameP95Ms": 26.3,
+      "renderP95Ms": 24.8,
+      "drawCalls": 600,
+      "memory": {
+        "geometries": 701,
+        "textures": 100
+      },
+      "afterDispose": {
+        "geometries": 0,
+        "textures": 0
+      }
+    }
+  ]
+}

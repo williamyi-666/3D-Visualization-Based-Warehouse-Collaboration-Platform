@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: 3D可视化仓储协同平台 · 开放平台 API
+  version: 1.0.0
+  description: >
+    本文件记录部分开放接口。外部ERP库存通过integration/snapshot接入，库存以ERP为准；
+    本地录入仅适用于standalone模式。2026-09-26按SQLite实现核对所列路由和模式边界，
+    此文件不是全部应用接口清单。实际接入范围及验收见项目推进计划。
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/integration/snapshot:
+    post:
+      summary: 接收外部ERP库存、对账或业务事件
+      description: >
+        仅integration模式。使用管理员会话或绑定来源的专用Bearer凭证；机器凭证只允许提交绑定source。
+        snapshot替换该来源全部库存，空rows清空该来源；同版本相同内容不重复应用，不同内容拒绝。
+        delta使用base_version及下一连续version，changes为绝对数量upsert或delete，不是数量增减值。
+        message_id重试必须保持原内容。reconcile只比较当前同版本库存，不调账。
+        events只记录外部业务流水，不改变库存。真实ERP须自行转换为此契约。
+      security:
+        - syncBearer: []
+        - platformCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source]
+              properties:
+                source: {type: string, description: 与专用凭证绑定来源一致}
+                mode: {type: string, enum: [snapshot, delta, reconcile, events], default: snapshot}
+                version: {type: integer, minimum: 1, description: 非events模式必填}
+                base_version: {type: integer, minimum: 1, description: delta必填且等于当前版本，version必须等于它加1}
+                message_id: {type: string, maxLength: 200, description: delta必填，同来源内唯一，重试不改变}
+                rows:
+                  type: array
+                  description: snapshot或reconcile必填；同SKU、库位、批次、状态不得重复
+                  items: {$ref: '#/components/schemas/ExternalStockRow'}
+                changes:
+                  type: array
+                  description: delta必填；每行添加op=upsert或delete，delete只需库存行身份字段
+                  items: {type: object, additionalProperties: true}
+                events:
+                  type: array
+                  maxItems: 1000
+                  description: >
+                    events模式必填。每行需event_id、type(inbound/outbound/adjustment)、sku、name、loc_code、qty、occurred_at。
+                    occurred_at须带时区；adjustment允许负数量。重复event_id内容不一致返回409。
+                  items: {type: object, additionalProperties: true}
+            example:
+              source: ERP联调
+              mode: snapshot
+              version: 1
+              rows:
+                - {placement: sku, warehouse_code: WH, sku: BEARING-6204, name: 深沟球轴承6204, qty: 10, unit: 套}
+      responses:
+        '200': {description: 返回应用、重放或对账结果；HTTP成功不等于对账matched为true}
+        '400': {description: 字段、库位映射或快照内容无效，整批拒绝}
+        '401': {description: 身份无效或凭证已撤销}
+        '403': {description: 角色、来源范围或同源校验失败}
+        '409': {description: 增量基线、消息内容、事件编号或对账版本冲突}
+  /api/v1/items:
+    post:
+      summary: 录入物品（绑定位置）
+      description: 仅standalone模式可写；integration模式返回403。管理员或库存操作员可用。相同SKU追加库存，重试应携带相同request_id。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemInput'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemCreated'
+  /api/v1/inventory:
+    get:
+      summary: 查询当前库存快照
+      description: integration模式返回外部库存明细（含来源、批次和状态），standalone模式返回本地库存。仅返回授权仓库范围；来源同步Bearer不能调用此接口。
+      responses:
+        '200':
+          description: 库存列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InventoryRow'
+  /api/v1/movements:
+    get:
+      summary: 查询库存变动流水
+      description: standalone模式按流水ID升序分页；integration模式返回空movements及source=external，外部业务流水使用/api/integration/events。
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+        - name: after
+          in: query
+          schema: {type: integer, default: 0}
+          description: 上次返回的next_after
+      responses:
+        '200':
+          description: 流水列表
+  /api/v1/locations/tree:
+    get:
+      summary: 位置树（场地→房间→家具→格）
+      responses:
+        '200':
+          description: 树形结构
+  /api/furniture:
+    post:
+      summary: 创建货架或地面区（/api/rack的兼容别名）
+      description: 空间维护接口，不产生库存；需管理员或空间维护权限。建议显式传roomCode。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                type: { type: string, default: rack, description: floor为地面区 }
+                roomCode: {type: string, description: 所属库区编码或ID}
+                rows: { type: integer, default: 4, minimum: 1 }
+                cols: { type: integer, default: 6, minimum: 1 }
+      responses:
+        '201': { description: 创建成功 }
+  /api/integration/events:
+    get:
+      summary: 查询格位的外部业务时间线
+      description: 仅integration模式，按时间倒序每页20条。来源系统需显式提交events；不会根据库存差额推算出入库。
+      parameters:
+        - {name: loc_code, in: query, required: true, schema: {type: string}}
+        - {name: page, in: query, schema: {type: integer, minimum: 1, default: 1}}
+      responses:
+        '200': {description: 返回rows、total、page及pages}
+        '403': {description: 格位不在授权范围}
+components:
+  securitySchemes:
+    platformCookie:
+      type: apiKey
+      in: cookie
+      name: supos_community_token
+      description: 平台会话由后端验证；浏览器写入还需同源校验，参照当前部署配置
+    syncBearer:
+      type: http
+      scheme: bearer
+      description: 来源专用同步凭证，仅用于外部同步入口，不用于一般查询或管理接口
+  schemas:
+    ExternalStockRow:
+      type: object
+      required: [sku, name, qty]
+      description: >
+        三种定位方式选一：本地loc_code；预先配置映射的external_loc_code；或placement=sku加warehouse_code。
+        SKU方式无绑定时进入待分配，后续绑定不回写ERP。qty为绝对库存数量，不能合计不同单位。
+      properties:
+        sku: {type: string}
+        name: {type: string}
+        qty: {type: number, minimum: 0}
+        unit: {type: string, default: 件}
+        unit_weight_kg: {type: number, minimum: 0}
+        batch_no: {type: string, default: ''}
+        status: {type: string, default: 可用}
+        category: {type: string}
+        loc_code: {type: string}
+        external_loc_code: {type: string}
+        placement: {type: string, enum: [sku]}
+        warehouse_code: {type: string}
+    ItemInput:
+      type: object
+      required: [name, loc_code]
+      properties:
+        name: { type: string }
+        category: { type: string }
+        qty: { type: number, default: 1, exclusiveMinimum: 0 }
+        sku: {type: string}
+        unit: {type: string, default: 件}
+        request_id: {type: string, description: 同一操作重试保持不变，新操作使用新编号}
+        loc_code: { type: string, example: HOME-BR1-WD01-L01-B02 }
+        note: { type: string }
+        photo: { type: string, description: base64 data URL }
+    ItemCreated:
+      type: object
+      properties:
+        id: { type: string }
+        loc_code: { type: string }
+        name: { type: string }
+    InventoryRow:
+      type: object
+      properties:
+        item_id: { type: string }
+        name: { type: string }
+        qty: { type: number }
+        loc_code: { type: string }
+        loc_name: { type: string }
+  x-outbound-events:
+    item.created:
+      summary: 物品已录入
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+    inventory.changed:
+      summary: 库存数量变化
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+    movement.created:
+      summary: 发生一笔库存变动
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object }
+security:
+  - platformCookie: []

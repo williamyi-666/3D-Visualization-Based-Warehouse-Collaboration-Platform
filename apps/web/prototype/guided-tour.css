@@ -1,0 +1,80 @@
+#guideChoice { width:min(480px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:24px; border:1px solid #475569; border-radius:14px; color:#e2e8f0; background:#0f172a; }
+#guideChoice::backdrop { background:#02061788; }
+#guideChoice h3,#guideCoach h3 { margin:0 0 12px; font-size:18px; }
+#guideChoice p,#guideChoice span,#guideCoach p { color:#c2cede; font-size:13px; line-height:1.7; }
+#guideChoice button,#guideCoach button,#guideInvitation button { font:inherit; cursor:pointer; border:1px solid #475569; border-radius:7px; background:#243249; color:#e2e8f0; padding:8px 12px; }
+#guideChoice [data-route] { display:block; width:100%; text-align:left; margin:12px 0; padding:16px; }
+#guideChoice [data-route] span { display:block; margin-top:6px; }
+#guideChoice [hidden],#guideCoach[hidden],#guideCoach [hidden],#guideOutline[hidden],#guideInvitation[hidden] { display:none!important; }
+#guideChoice details { margin-top:20px; font-size:13px; }
+.guide-choice-actions { display:flex; justify-content:space-between; margin-top:22px; }
+#guideCoach { position:fixed; z-index:9400; width:min(330px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; border:1px solid #5c85bd; border-radius:12px; padding:16px; background:#122039; color:#f1f5f9; box-shadow:0 8px 30px #0006; }
+#guideCoach header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
+#guideProgress { color:#9cc8ff; font-size:12px; }
+#guideCoach #guideExit { padding:7px 10px; font-size:12px; white-space:nowrap; flex-shrink:0; }
+.guide-label { color:#93b4df; font-size:12px; }
+#guideCoach p { margin:5px 0 14px; }
+#guideStatus { font-size:12px; color:#a4d6bf; margin:10px 0; line-height:1.6; }
+#guideCoach footer { display:flex; gap:7px; flex-wrap:wrap; margin-top:12px; }
+#guideCoach footer button { padding:7px 9px; font-size:12px; }
+#guideCoach #guideNext { margin-left:auto; background:#2563eb; border-color:#3b82f6; }
+#guideCoach button:disabled { opacity:.4; cursor:not-allowed; }
+#guideCoach .guide-confirm { width:100%; }
+#guideCoach .guide-label,#guideCoach #guideExpected,#guideCoach #guidePause { display:none; }
+#guideChoice button:focus-visible,#guideCoach button:focus-visible,#guideInvitation button:focus-visible { outline:2px solid #93c5fd; outline-offset:3px; }
+#guideOutline { position:fixed; z-index:9399; pointer-events:none; border:3px solid #60a5fa; border-radius:7px; box-shadow:0 0 0 4px #3b82f633,0 0 0 9999px #02061722; }
+#guideOutline::after { content:'点这里'; position:absolute; top:-27px; right:-3px; padding:3px 8px; border-radius:5px; color:#fff; background:#2563eb; font-size:12px; white-space:nowrap; }
+#guideConnector { position:fixed; inset:0; z-index:9399; pointer-events:none; }
+#guideConnector[hidden] { display:none!important; }
+#guideInvitation { position:fixed; right:12px; bottom:64px; max-width:calc(100vw - 24px); z-index:15; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px; border:1px solid #475569; border-radius:10px; color:#e2e8f0; background:#17263f; font-size:13px; }
+.integration-view #helpTourBtn { display:inline-block; }
+
+#guideChoice #guideStart,#guideChoice #guideResume {display:block;width:100%;text-align:left;margin:12px 0;padding:16px;}
+#guideChoice #guideStart {background:#2563eb;border-color:#3b82f6;}
+#guideChoice #guideStart span,#guideChoice #guideResume span {display:block;margin-top:6px;color:#dbeafe;}
+#guideChoice #guideStart strong,#guideChoice #guideResume strong {font-size:15px;}
+#guideCoach #guideOpen {width:100%;background:#2563eb;margin:6px 0;}
+#guideMore {font-size:12px;color:#b8c9df;}
+#guideMore p {margin-top:8px;}
+
+#guideFormHint {display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:14px;border-radius:8px;background:#1d3555;color:#dbeafe;font-size:13px;line-height:1.6;}
+#guideFormHint[hidden]{display:none;}
+#guideFormHint button{flex-shrink:0;border:1px solid #64748b;border-radius:6px;padding:6px 8px;background:#243249;color:#e2e8f0;cursor:pointer;}
+
+#guideChoice .guide-eyebrow{color:#93c5fd;font-size:12px;letter-spacing:2px}
+#guideChoice h3{font-size:24px;margin-top:8px}
+.guide-journey{display:flex;gap:8px;padding:0;list-style:none;counter-reset:journey;margin:20px 0}
+.guide-journey li{flex:1;font-size:12px;color:#c2cede;line-height:1.8}
+.guide-journey li:before{counter-increment:journey;content:counter(journey);display:block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:#243d60;color:#bfdbfe;margin-bottom:6px}
+#guideChoice #guideDemo{display:block;width:100%;text-align:left;padding:16px;margin:12px 0}
+#guideChoice #guideDemo span{display:block;margin-top:6px}
+#guideDemoDialog{width:min(960px,calc(100vw - 24px));height:min(760px,calc(100dvh - 24px));max-width:none;max-height:none;padding:0;background:#0f172a;color:#e2e8f0;border:1px solid #475569;border-radius:14px;overflow:hidden}
+#guideDemoDialog::backdrop{background:#020617aa}
+#guideDemoDialog header{height:54px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;font-size:14px}
+#guideDemoDialog header button{padding:7px 10px;color:#e2e8f0;background:#243249;border:1px solid #475569;border-radius:7px;cursor:pointer}
+#guideDemoDialog iframe{display:block;border:0;width:100%;height:calc(100% - 54px)}
+#guideCoach.guide-walk{width:min(280px,calc(100vw - 24px));padding:14px}
+#guideCoach.guide-walk .guide-label,#guideCoach.guide-walk #guideExpected,#guideCoach.guide-walk #guideStatus,#guideCoach.guide-walk #guidePause{display:none}
+#guideCoach.guide-walk h3{font-size:16px;margin-bottom:8px}
+#guideCoach.guide-walk p{margin:0;line-height:1.7}
+#setupDemoDialog{width:min(1080px,calc(100vw - 24px));height:min(820px,calc(100dvh - 24px));max-width:none;max-height:none;padding:0;background:#0f172a;color:#e2e8f0;border:1px solid #475569;border-radius:14px;overflow:hidden}
+#setupDemoDialog::backdrop{background:#02061788}
+#setupDemoDialog>header{height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;font-size:14px}
+#setupDemoDialog>header button{padding:7px 10px;color:#e2e8f0;background:#243249;border:1px solid #475569;border-radius:7px;font:inherit;cursor:pointer}
+#setupDemoDialog iframe{display:block;border:0;width:100%;height:calc(100% - 52px)}
+#guideChoice #guideResume{padding:12px;font-size:13px}
+
+#guideChoice #guideUse{display:block;width:100%;text-align:left;margin:12px 0;padding:16px}
+#guideChoice #guideUse strong{font-size:15px}
+#guideChoice #guideUse span{display:block;margin-top:6px}
+#guideChoice #guideDemo{padding:10px 12px;font-size:13px}
+#guideChoice #guideDemo span{font-size:12px}
+#guideCoach.guide-inline{position:static;width:auto;max-height:none;margin:12px 0;padding:12px;box-shadow:none;background:#172d49}
+#guideCoach.guide-inline header{margin-bottom:6px}
+#guideCoach.guide-inline h3{font-size:15px;margin-bottom:6px}
+#guideCoach.guide-inline #guideOpen,#guideCoach.guide-inline #guideStatus{display:none}
+.guide-form-target{outline:2px solid #60a5fa;outline-offset:3px;border-radius:6px}
+.context-hint{margin:8px 0 12px;padding:8px 10px;border:1px solid #314b6c;border-radius:8px;background:#15263e;font-size:12px;color:#b5c5da}
+.context-hint summary{cursor:pointer;color:#b9d8ff;font-weight:500}
+.context-hint p{margin:6px 0 0;font-size:12px;line-height:1.7}
+.modal-box:has(#guideCoach:not([hidden]))>.context-hint{display:none}

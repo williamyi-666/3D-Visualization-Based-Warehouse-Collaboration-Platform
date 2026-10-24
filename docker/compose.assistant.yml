@@ -1,0 +1,32 @@
+# 与 compose.offline.yml 一起使用；模型仅向仓储后台开放，不发布到局域网。
+# 模型数据卷须预先备好；可用临时联网的 Ollama 容器下载，随后离线运行。
+# 先导入 Ollama 镜像和模型数据卷，再 up -d --pull never；不在作业时下载模型。
+services:
+  warehouse:
+    environment:
+      SPATIAL_ASSISTANT_URL: http://assistant:11434
+    depends_on:
+      assistant:
+        condition: service_started
+    networks:
+      - default
+      - assistant
+  assistant:
+    image: ${SPATIAL_OLLAMA_IMAGE:-ollama/ollama:0.40.2}
+    pull_policy: never
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_FLASH_ATTENTION: "false"
+    volumes:
+      - assistant-models:/root/.ollama
+    networks:
+      - assistant
+volumes:
+  assistant-models:
+    name: ${SPATIAL_ASSISTANT_VOLUME:-warehouse-offline_assistant}
+networks:
+  assistant:
+    internal: true

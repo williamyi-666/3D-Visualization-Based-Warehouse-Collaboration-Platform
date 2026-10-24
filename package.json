@@ -1,0 +1,15 @@
+{
+  "name": "spatial-inventory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "可独立部署的三维仓储协同平台，支持快速建仓、手机作业、多端同步及可选智能助手。",
+  "dependencies": {
+    "mqtt": "^5.10.1"
+  },
+  "scripts": {
+    "test": "node tools/run-tests.mjs",
+    "audit:deps": "npm audit --registry=https://registry.npmjs.org && npm --prefix apps/api audit --registry=https://registry.npmjs.org"
+  },
+  "license": "MIT"
+}

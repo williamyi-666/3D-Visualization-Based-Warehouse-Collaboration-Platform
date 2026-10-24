@@ -1,0 +1,34 @@
+{
+  "image": "opensupos-spatial-warehouse:search-feedback-20260917",
+  "source_commit": "b7d4cff",
+  "method": "CUA真实平台会话，AX状态及截图核对",
+  "environments": [
+    {
+      "url": "http://localhost:28088/Warehouse3D",
+      "identity": "warehouse_viewer_test / 空间管理员"
+    },
+    {
+      "url": "http://127.0.0.1:38088/Warehouse3D",
+      "identity": "supos / 管理员"
+    }
+  ],
+  "steps": {
+    "query": "FLOOR-B",
+    "result_count": 1,
+    "located": "WH-2-F1-L04-B03",
+    "quantity": 2,
+    "unit": "托",
+    "status": "待检",
+    "manual_return": "WH-1",
+    "old_location_message_removed": true,
+    "query_retained": true,
+    "overview_cells": 90,
+    "overview_records": 3,
+    "rendered_scene_checked": true
+  },
+  "business_writes": false,
+  "limits": [
+    "旧请求晚到与错误由自动回归覆盖，本次真实页面未注入延迟"
+  ],
+  "browser_connection": "全局getState报错，但直接createBrowserTab成功；不能将列表接口失败等同页面不可操作"
+}

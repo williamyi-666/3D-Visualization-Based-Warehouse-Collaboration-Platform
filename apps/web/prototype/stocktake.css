@@ -1,0 +1,13 @@
+#stocktakeModal .modal-box{box-sizing:border-box;max-height:92dvh}
+#stocktakeModal .stocktake-state{font-weight:650;color:#e2e8f0;margin:8px 0}
+#stocktakeModal .stocktake-meta{margin:10px 0 14px;color:#9fb0c9;font-size:13px;overflow-wrap:anywhere}
+#stocktakeModal summary{cursor:pointer;color:#aacaff}
+#stocktakeModal .stocktake-meta p{margin:7px 0;font-size:12px}
+#stocktakeModal .stocktake-return{padding:10px 12px;border-left:3px solid #fbbf24;background:#3d321a;color:#f3d28c;border-radius:6px}
+#stocktakeModal label{display:block;color:#afbed3;font-size:13px;margin:10px 0 5px}
+#stocktakeModal textarea{display:block;width:100%;min-height:72px;box-sizing:border-box;resize:vertical;padding:10px;border:1px solid #405471;border-radius:8px;background:#1c2b43;color:#e2e8f0;font:inherit;margin-top:6px}
+#stocktakeModal textarea:disabled{color:#aab9ce;opacity:1}
+#stocktakeModal input{box-sizing:border-box}
+#stocktakeModal .stocktake-navigation button{padding:8px 10px;min-height:40px}
+#stocktakeModal .actions{bottom:0!important;gap:8px;margin-top:14px}
+@media(max-width:600px){#stocktakeModal .modal-box{padding:16px}#stocktakeModal .stocktake-navigation button{font-size:13px}#stocktakeModal .actions button{min-height:42px}}

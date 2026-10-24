@@ -1,0 +1,4 @@
+# NVIDIA Linux / Docker Desktop WSL 虚拟机可用 GPU 时叠加此文件。
+services:
+  assistant:
+    gpus: all

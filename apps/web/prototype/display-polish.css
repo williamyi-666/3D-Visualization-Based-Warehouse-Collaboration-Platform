@@ -1,0 +1,260 @@
+/* 原界面显示修整：保持现有入口、配色和业务交互。 */
+:root { --muted: #9baac0; }
+.integration-view #topbar { padding: 8px 10px; gap: 6px; border-radius: 0 0 10px 10px; }
+.integration-view #topbar .tb-group:has(#searchInput) { flex-basis: 290px !important; padding: 3px 5px; }
+.integration-view #userChip { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.integration-view #locPickerBtn { max-width: 250px; }
+#locBreadcrumb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sidebar { font-size: 14px; line-height: 1.6; }
+#sidebar h3 { font-size: 17px; }
+#sidebar .muted, .modal-box .muted { color: #aebbd0; line-height: 1.6; }
+#ltBody .lt-grp { color: #a4b4cb; font-size: 12px; }
+#ltToggle, #sbToggle { min-height: 36px; }
+
+#layoutModal .layout-box { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); padding: 12px 16px; overflow: hidden; }
+#layoutModal .layout-box > :not(.layout-row) { flex-shrink: 0; }
+#layoutModal .layout-box > h3 { margin-bottom: 6px; }
+#layoutModal .lay-help { margin: 0 0 4px; }
+#layoutModal .lay-help summary { padding: 5px 10px; font-size: 12px; }
+#layoutModal .lay-help[open] .lay-help-body { max-height: 120px; overflow: auto; }
+#layoutModal .layout-box > div > label:has(#snapGrid) { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+#layoutModal #snapGrid { width: auto; min-width: 85px; }
+#layoutModal .cad-toolbar { margin: 0 0 6px; gap: 6px; }
+#layoutModal .layout-row { min-height: 140px; padding: 8px; }
+#layoutModal .layout-list-wrap { flex-basis: 320px; }
+#layoutModal .lay-actions { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--border); }
+#layoutModal .lay-actions button { min-height: 36px; }
+#layoutModal .layout-box label { margin-top: 7px; }
+#layoutModal .csv-tip { color: #aabbd0; }
+
+#spaceManagement .modal-box { width: min(760px, 94vw) !important; max-height: calc(100dvh - 32px) !important; padding: 0 20px 16px; scroll-padding-top: 58px; }
+#spaceTitle { position: sticky; top: 0; z-index: 2; padding: 18px 0 12px; margin: 0; background: var(--surface); border-bottom: 1px solid var(--border); }
+#spaceTitle:focus { outline: none; }
+#spaceManagement #spaceFields { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 16px !important; }
+#spaceFields > label { margin: 4px 0; }
+#spaceFields input, #spaceFields select { margin-top: 6px; }
+#spaceFields > label:has([name="note"]), #spaceFields > button { grid-column: 1 / -1; }
+#spaceFilterControls > label { flex: 1 1 150px; }
+#spaceManagement .actions { position: sticky; bottom: -16px; z-index: 2; background: var(--surface); padding: 12px 0 16px; border-top: 1px solid var(--border); }
+#spaceManagement .actions button { background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong); min-height: 38px; }
+#spaceFields > button { min-height: 38px; margin-top: 8px; }
+
+@media(max-width:880px) {
+  #layoutModal .layout-list-wrap { max-width: none; }
+  #layoutModal .layout-canvas { min-height: 230px; }
+  #layoutModal .lay-acts-left { gap: 4px; }
+  #layoutModal .lay-actions button { padding: 7px 9px; font-size: 12px; }
+}
+@media(max-width:520px) {
+  #spaceManagement .modal-box { padding: 0 14px 12px; }
+  #spaceManagement #spaceFields { grid-template-columns: minmax(0,1fr); }
+  #spaceManagement .actions { bottom: -12px; }
+  #layoutModal .layout-box { padding: 10px; }
+  .integration-view #userChip { max-width: 150px; }
+}
+
+#spacePrevious, #spaceNext { padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--surface-3); color: var(--text); cursor: pointer; }
+#spacePrevious:disabled, #spaceNext:disabled { opacity: .45; cursor: default; }
+#spacePhoto::file-selector-button { padding: 7px 10px; margin-right: 10px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface-3); color: var(--text); cursor: pointer; }
+
+#userName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#userRole { flex-shrink: 0; }
+
+/* 固定辅助入口位置，保留面板折叠及原有按钮事件。 */
+#ltBody { min-height: 0; }
+#ltFooter { flex: 0 0 auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); }
+#ltFooter #userChip { position: relative; width: 100%; max-width: none; min-width: 0; padding: 10px 24px 10px 10px !important; border: 1px solid var(--border); border-radius: 8px !important; flex-direction: column; align-items: flex-start !important; gap: 4px !important; text-align: left; }
+#ltFooter #userName { max-width: 100%; }
+#ltFooter #userChip > span:last-child { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+#leftToolbar:not(.lt-open) #ltFooter { padding: 8px 4px; }
+#leftToolbar:not(.lt-open) #ltFooter #userName, #leftToolbar:not(.lt-open) #ltFooter #userRole { display: none; }
+#leftToolbar:not(.lt-open) #ltFooter #userChip { padding: 10px !important; min-height: 38px; }
+#leftToolbar:not(.lt-open) #ltFooter #userChip > span:last-child { left: 0; right: 0; text-align: center; }
+#app #sbToggle { top: 8px; right: 8px; bottom: auto; transform: none; width: 34px; height: 34px; min-height: 34px; border-radius: 8px; z-index: 9; }
+#sidebar:not(.sb-collapsed) { padding-top: 52px; }
+#app:has(#sidebar.sb-collapsed) #topbar { right: 52px; }
+@media(max-width:720px) {
+  /* 窄屏工具栏整行滚动，帮助和账号随行排列，避免悬浮遮挡工具。 */
+  .integration-view #leftToolbar, .integration-view #leftToolbar.lt-open { overflow-x: auto; overflow-y: hidden; align-items: center; scrollbar-width: thin; scrollbar-color: #475569 var(--surface); }
+  .integration-view #ltBody { flex: 0 0 auto; width: auto; overflow: visible; padding: 4px 8px; }
+  .integration-view #ltFooter { position: static; flex-direction: row; align-items: center; width: auto; padding: 4px 48px 4px 0; border: 0; }
+  .integration-view #ltFooter .lt-btn { flex: 0 0 auto; width: auto; margin: 0; padding: 6px 10px; }
+  .integration-view #ltFooter #userChip { width: auto; max-width: 180px; padding: 6px 24px 6px 10px !important; flex-direction: row; align-items: center !important; }
+  .integration-view #ltFooter #userName { max-width: 90px; }
+  /* 操作说明已在上方提供，窄画布优先保证左下角网格标注完整。 */
+  #layoutModal #layoutSelHint { display: none; }
+}
+@media(min-width:721px) { #leftToolbar:not(.lt-open) { align-self: stretch; } }
+#ltBody { scrollbar-width: thin; scrollbar-color: #475569 transparent; }
+
+/* 搜索列表滚动时，关闭入口仍留在框内顶部。 */
+#searchMsg .search-dismiss { position:sticky; top:0; float:right; z-index:1; margin:0 0 8px 10px; padding:5px 9px; border:1px solid var(--border-strong); border-radius:6px; background:var(--surface-3); color:var(--text); font:inherit; cursor:pointer; }
+#searchMsg .inventory-hit { clear:both; }
+/* 独立部署也使用可读的结果面板，避免文字直接叠在货架上。 */
+#searchMsg { z-index:6; max-height:min(38vh,calc(100% - 150px)); overflow:auto; overscroll-behavior:contain; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; text-shadow:none; line-height:1.6; }
+.view-gizmo { z-index:4; }
+#searchMsg:empty { display:none; }
+#searchMsg .inventory-hit { white-space:normal; line-height:1.5; overflow-wrap:anywhere; font:inherit; }
+
+/* 右侧概览沿用原卡片，格位列表分批展示，避免大库区一次铺满。 */
+#sidebar .sb-facts { display:grid; grid-template-columns:auto minmax(0,1fr); gap:9px 14px; margin:0; font-size:13px; }
+#sidebar .sb-facts dt { color:var(--text-2); }
+#sidebar .sb-facts dd { margin:0; text-align:right; overflow-wrap:anywhere; }
+#sidebar .sb-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+#sidebar .sb-stats strong { display:block; font-size:22px; }
+#sidebar .sb-stats span { display:block; color:var(--text-2); font-size:12px; margin-top:5px; }
+#sidebar .sb-occupancy { display:flex; justify-content:space-between; margin:16px 0 7px; font-size:13px; }
+#sidebar .sb-progress { width:100%; height:7px; accent-color:#60a5fa; }
+#sidebar .sb-concerns { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+#sidebar .sb-filter { display:flex; gap:6px; }
+#sidebar .sb-filter button { flex:1; }
+#sidebar .sb-filter button,#sidebar .sb-concerns button,#sidebar .sb-cell { border:1px solid var(--border-strong); border-radius:7px; padding:8px; background:var(--surface-2); color:var(--text); font:inherit; font-size:12px; cursor:pointer; }
+#sidebar .sb-filter button[aria-pressed="true"], #sidebar .sb-concerns button[aria-pressed="true"] { background:#2563eb; border-color:#93c5fd; color:#fff; font-weight:700; }
+#sidebar .sb-concerns button:disabled { opacity:.55; cursor:default; }
+#sidebar .sb-cell { display:block; width:100%; text-align:left; margin-bottom:7px; overflow-wrap:anywhere; }
+#sidebar .sb-cell span { display:block; }
+#sidebar .sb-cell span+span { color:var(--text-2); margin-top:4px; }
+#sidebar .sb-cell:hover { background:var(--surface-3); }
+#sidebar #sbMore[hidden] { display:none; }
+
+/* 清空按钮属于输入框，预留右侧空间，避免遮住关键词。 */
+#topbar .search-field { position:relative; display:flex; flex:1 1 150px; min-width:110px; }
+#topbar .search-field #searchInput { width:100%; min-width:0; max-width:none; box-sizing:border-box; padding-right:36px; }
+#topbar .search-field #clearSearch { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:26px; height:26px; min-height:0; padding:0!important; display:grid; place-items:center; border:0; background:transparent; box-shadow:none; color:var(--text-2); font-size:18px; }
+#topbar .search-field #clearSearch:hover { background:var(--surface-3); color:var(--text); }
+#topbar .search-field:has(#searchInput:placeholder-shown) #clearSearch { display:none; }
+
+#topbar #searchBtn { display:inline-flex; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:34px; padding:0; }
+#searchBtn svg { pointer-events:none; }
+
+#skuFields input,#skuFields select { display:block; width:100%; box-sizing:border-box; margin-top:5px; }
+#skuSection { margin-top:20px; border-top:1px solid var(--border); padding-top:10px; }
+#skuSection details { margin:12px 0; font-size:12px; overflow-wrap:anywhere; }
+
+/* 格位管理：常用内容常显，低频内容按需展开。 */
+#spaceManagement #spaceFields { grid-template-columns:minmax(0,1fr); }
+#spaceManagement details { margin:12px 0; padding:10px 0; border-top:1px solid var(--border); }
+#spaceManagement summary { cursor:pointer; font-weight:600; }
+#spaceManagement .space-more-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+#spaceManagement #spaceCurrentInventory { padding:12px; background:var(--surface-3); border-radius:8px; max-height:160px; overflow:auto; }
+#spaceManagement #spaceCurrentInventory p { margin:6px 0; }
+#spaceManagement #skuSection { border:0; margin:0; padding:0; }
+#spaceManagement .actions #spaceSave { background:var(--primary,#2563eb); color:white; }
+@media(max-width:600px){#spaceManagement .space-more-grid{grid-template-columns:1fr;}}
+
+/* 单格位详情保留原卡片，仅收紧间距与低频属性。 */
+#sidebar .cell-summary h3 { margin:0 0 6px; }
+#sidebar .cell-summary p { margin:6px 0; }
+#sidebar .cell-status { font-size:12px; color:var(--text); }
+#sidebar .cell-details { margin-top:10px; font-size:12px; }
+#sidebar .cell-details summary { cursor:pointer; color:#b8c9e2; }
+#sidebar .cell-details .inventory-properties { margin:10px 0 0; gap:6px 8px; }
+#sidebar .cell-operations { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+#sidebar .cell-tools { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+#sidebar .cell-tools .business-link, #sidebar .cell-operations .business-link { padding:8px 4px; margin:0; }
+#sidebar .standalone-item h4 { margin:0 0 4px; font-size:14px; }
+#sidebar .standalone-item p { margin:4px 0; overflow-wrap:anywhere; }
+#sidebar .standalone-item .inventory-quantity { font-size:20px; font-weight:700; line-height:1.4; }
+
+/* 顶部与两侧统一控件尺度；沿用原配色，只去除多层包裹。 */
+.integration-view #topbar { padding:8px; gap:8px; border-radius:0 0 8px 8px; }
+.integration-view #topbar .tb-group:has(#searchInput) { padding:0; gap:8px; border:0; border-radius:0; background:transparent; }
+#topbar #locPickerBtn { height:36px; padding:0 10px; border-radius:8px; }
+#topbar #locBreadcrumb { padding:0; border:0; border-radius:0; background:transparent; }
+#topbar .search-field #searchInput { height:36px; padding-top:0; padding-bottom:0; padding-left:10px; border-radius:8px; }
+#topbar #searchBtn { flex-basis:36px; width:36px; height:36px; border-radius:8px; }
+#topbar #searchScope { height:36px; border-radius:8px!important; padding:0 8px!important; }
+#app #sbToggle { width:36px; height:36px; min-height:36px; border-radius:8px; }
+#ltBody .lt-btn { border-radius:8px; }
+#sidebar .card, #sidebar .item-card { border-radius:8px; }
+@media(min-width:721px) {
+  #ltToggle { height:36px; min-height:36px; width:calc(100% - 16px); margin:8px 8px 0; border-radius:8px; }
+}
+
+/* 右栏用中部贴边把手收起，释放顶部空白。 */
+#sbToggle[aria-expanded="false"] svg { transform:rotate(180deg); }
+@media(min-width:721px) {
+  #app #sbToggle { top:50%; right:320px; bottom:auto; transform:translateY(-50%); width:24px; height:48px; min-height:48px; padding:0; border-radius:8px 0 0 8px; box-shadow:none; transition:right .28s var(--ease); }
+  #app #sidebar.sb-collapsed ~ #sbToggle { right:0; }
+  #sidebar:not(.sb-collapsed) { padding-top:18px; }
+  #app:has(#sidebar.sb-collapsed) #topbar { right:10px; }
+}
+
+/* 电脑内置浏览器的窄窗口：菜单浮层 + 场景 + 底部详情，避免横栏被当作188px高的内容裁切。 */
+@media(max-width:720px) {
+  html:not(.integration-view) #app { height:100dvh; min-height:0; overflow:hidden; }
+  html:not(.integration-view) #leftToolbar { position:absolute; inset:0 auto 0 0; z-index:10; }
+  html:not(.integration-view) #leftToolbar.lt-open { width:208px; height:100%; max-height:100%; flex:none; box-shadow:8px 0 24px #0005; }
+  html:not(.integration-view) #leftToolbar:not(.lt-open) { bottom:auto; height:48px!important; max-height:48px!important; background:var(--surface); border-radius:0 0 8px 0; }
+  html:not(.integration-view) #leftToolbar:not(.lt-open) #ltBody,
+  html:not(.integration-view) #leftToolbar:not(.lt-open) #ltFooter { display:none; }
+  html:not(.integration-view) #leftToolbar .lt-toggle { min-height:36px; margin:6px; width:calc(100% - 12px); }
+  html:not(.integration-view) #ltBody .lt-group-toggle { padding:8px 9px; background:var(--surface-3); border-left:3px solid #60a5fa; }
+  html:not(.integration-view) #ltBody .lt-group-items { margin:6px 0 8px 8px; padding-left:6px; border-left:1px solid var(--border); }
+  html:not(.integration-view) #scene { flex:1 1 0; min-height:0; width:100%; }
+  html:not(.integration-view) #topbar { left:48px; right:0; }
+  html:not(.integration-view) #sidebar { flex:0 0 34%; max-height:34%; min-height:0; width:100%; padding:12px; }
+  html:not(.integration-view) #sidebar.sb-collapsed { flex-basis:0; max-height:0; padding:0; border:0; }
+  html:not(.integration-view) #app #sbToggle { bottom:34%; }
+  html:not(.integration-view) #app #sidebar.sb-collapsed ~ #sbToggle { bottom:0; }
+}
+
+/* 左侧按任务分组；整栏收起时仍保留全部功能图标。 */
+#ltBody .lt-group { flex:0 0 auto; min-width:0; }
+#ltBody .lt-group-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; padding:10px 6px 6px; border:0; border-radius:6px; background:transparent; color:var(--text); font:inherit; font-size:14px; font-weight:700; line-height:1.5; cursor:pointer; }
+#ltBody .lt-group-toggle:hover { background:var(--surface-3); color:var(--text); }
+#ltBody .lt-group-toggle:focus-visible { outline:2px solid #60a5fa; outline-offset:-2px; }
+#ltBody .lt-group-toggle[aria-expanded="false"] span { transform:rotate(-90deg); }
+#ltBody .lt-group-items { display:flex; flex-direction:column; gap:4px; }
+#ltBody .lt-group.is-collapsed .lt-group-items { display:none; }
+#leftToolbar:not(.lt-open) #ltBody .lt-group-toggle { display:none; }
+#leftToolbar:not(.lt-open) #ltBody .lt-group-items { display:flex; }
+#ltFooter .lt-btn { margin:0; border-radius:8px; }
+#app #leftToolbar [data-workspace-hidden],#transferModal [data-workspace-hidden] { display:none!important; }
+.lt-initialization { margin:8px 0 0; }
+.lt-initialization > summary { padding:9px 6px; color:var(--text-2); font-size:12px; cursor:pointer; }
+.lt-initialization[open] > .lt-btn { margin-top:5px; }
+#leftToolbar:not(.lt-open) .lt-initialization > summary { font-size:0; text-align:center; }
+#leftToolbar:not(.lt-open) .lt-initialization > summary::after { content:'⋯'; font-size:20px; }
+@media(max-width:720px) {
+  .integration-view #ltBody .lt-group, .integration-view #ltBody .lt-group-items { display:contents; }
+  .integration-view #ltBody .lt-group-toggle { display:none; }
+}
+
+/* Menu typography: group headings lead, actions stay secondary. */
+#ltBody .lt-group-toggle span { color:var(--muted); font-size:12px; font-weight:400; }
+#ltBody .lt-btn, #ltFooter .lt-btn { font-size:13px; font-weight:400; }
+#ltBody .lt-btn.active, #ltBody .lt-btn.lt-primary { font-weight:600; }
+@media(min-width:721px) {
+  #leftToolbar.lt-open #ltBody .lt-group + .lt-group { margin-top:10px; }
+}
+
+/* 分组用底条与缩进建立层级，保留原有高亮配色。 */
+@media(min-width:721px) {
+  #leftToolbar.lt-open #ltBody .lt-group-toggle { padding:8px 9px; background:var(--surface-3); border-left:3px solid #60a5fa; border-radius:6px; }
+  #leftToolbar.lt-open #ltBody .lt-group-items { margin:6px 0 0 8px; padding-left:6px; border-left:1px solid var(--border); }
+  #leftToolbar.lt-open #ltBody .lt-group-items .lt-btn { padding:9px 7px; gap:6px; }
+}
+
+/* 右栏标题常驻，收起后仍可读取关键摘要。 */
+#sidebar .sb-section > summary { cursor:pointer; display:flex; flex-wrap:wrap; align-items:center; gap:6px; list-style:none; }
+#sidebar .sb-section > summary::-webkit-details-marker { display:none; }
+#sidebar .sb-section > summary::after { content:'›'; margin-left:auto; font-size:20px; color:var(--text-2); }
+#sidebar .sb-section[open] > summary::after { transform:rotate(90deg); }
+#sidebar .sb-section-title { font-size:16px; font-weight:700; }
+#sidebar .sb-section-brief { width:100%; order:2; color:var(--text-2); font-size:12px; }
+#sidebar .sb-section[open] .sb-section-brief { display:none; }
+#sidebar .sb-section-body { margin-top:14px; }
+#sidebar .sb-section > summary:focus-visible { outline:2px solid #60a5fa; outline-offset:4px; border-radius:3px; }
+
+#assetDelete:disabled { opacity:.4; cursor:not-allowed; }
+
+/* 窄屏详情位于底部，开关跟随面板边缘，不占用顶部工具栏。 */
+@media(max-width:720px) {
+  #app #sbToggle { top:auto; bottom:32%; right:12px; width:44px; height:30px; min-height:30px; border-radius:8px 8px 0 0; box-shadow:none; }
+  #app #sidebar.sb-collapsed ~ #sbToggle { bottom:0; right:12px; }
+  #app #sbToggle svg { transform:rotate(90deg); }
+  #app #sbToggle[aria-expanded="false"] svg { transform:rotate(-90deg); }
+  #app #sidebar:not(.sb-collapsed) { padding-top:12px; }
+  #app:has(#sidebar.sb-collapsed) #topbar { right:10px; }
+}

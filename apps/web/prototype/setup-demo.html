@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>50秒了解建仓与查货</title><link rel="stylesheet" href="./setup-demo.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script></head>
+<body>
+<header><span>自动模拟 · 样板数据 · 无需填写</span><span id="clock">00 / 50 秒</span></header>
+<nav id="chapters" aria-label="选择演示阶段"></nav>
+<main>
+  <section id="formPanel" aria-label="模拟填写过程"><small>自动演示</small><h2 id="formTitle">设置空间</h2><p id="formHelp"></p><div id="fields"></div><div id="simAction" aria-hidden="true"></div><p id="formResult" role="status"></p></section>
+  <section id="scenePanel" aria-label="随填写变化的三维仓库"><div id="scene"></div><div id="sceneStatus">按尺寸建立仓库空间</div><div id="waiting">填写尺寸后，这里生成样板库区</div><div id="located" hidden>已定位 · A货架 / 第2层 / 第2格</div></section>
+  <svg id="cursor" viewBox="0 0 28 34" aria-hidden="true"><path d="M3 2 L3 27 L10 21 L15 32 L21 29 L16 19 L26 18 Z" fill="white" stroke="#17263f" stroke-width="2"/></svg>
+  <section id="finished" hidden aria-label="演示完成"><small>演示完成</small><h2>空间、格位和货品<br>已经对应起来</h2><p>按现场搭建空间，再登记货品，随时查询和定位。</p><div><button id="build">开始配置仓库</button><button id="browse">先浏览平台</button></div></section>
+  <p id="error" hidden role="status">当前设备未能加载三维演示。使用流程：设置库区尺寸 → 添加并摆放货架 → 登记货品 → 搜索定位。可关闭演示后继续查看操作引导。</p>
+</main>
+<footer><div id="caption" role="status">先看一遍仓库如何搭起来，再按需动手。</div><input id="progress" type="range" min="0" max="50" step="0.1" value="0" aria-label="演示进度">
+<div class="controls"><button id="play">暂停</button><button id="replay">重播</button><span>点击阶段可暂停查看</span></div></footer>
+<script type="module">import('./setup-demo.mjs').catch(()=>{document.getElementById('error').hidden=false;document.getElementById('play').disabled=true;});</script>
+</body></html>

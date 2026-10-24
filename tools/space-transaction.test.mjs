@@ -1,0 +1,86 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync,rmSync,realpathSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join,relative,isAbsolute } from 'node:path';
+import { actorStore } from '../apps/api/context.mjs';
+
+test('空间事务：中途故障与审计故障均回滚节点、事件，成功记录操作人和差异', async()=>{
+  const root=realpathSync(tmpdir()),dir=mkdtempSync(join(root,'spatial-transaction-'));
+  process.env.SPATIAL_DATA_DIR=dir;
+  const db=await import('../apps/api/db.mjs'); const sql=db.default;
+  const state=()=>({nodes:sql.prepare('SELECT * FROM space_node ORDER BY id').all(),inventory:sql.prepare('SELECT * FROM inventory ORDER BY id').all(),movements:sql.prepare('SELECT * FROM movement ORDER BY id').all(),events:sql.prepare('SELECT * FROM outbox_event ORDER BY id').all(),audit:db.listSpaceOperations()});
+  try {
+    const layout=db.getLayout(),initial=state();
+    const original=layout.furniture[0];
+    const source={name:'事务副本',type:original.type,rows:original.rows,cols:original.cols,geom:{w:original.w,h:original.h,d:original.d,rot:0},merges:{L01:[[1,2]]},cellNames:{'L01-B01':'副本格位'}};
+    assert.throws(()=>db.cloneRack(original.code,{source,positions:[{x:0,z:2},{x:0,z:2}]}),/重叠/);
+    assert.deepEqual(state(),initial);
+
+    const changed={...layout,room:{...layout.room,width:17},furniture:layout.furniture.map((f,i)=>({...f,x:f.x+1,rows:i===0?f.rows+1:f.rows}))};
+    sql.exec("CREATE TRIGGER fail_second_rack BEFORE UPDATE ON space_node WHEN OLD.loc_code='WH-1-B' BEGIN SELECT RAISE(ABORT,'injected rack failure'); END");
+    assert.throws(()=>db.saveLayout(changed),/injected rack failure/);
+    assert.deepEqual(state(),initial);
+    sql.exec('DROP TRIGGER fail_second_rack');
+    sql.exec("CREATE TRIGGER fail_audit BEFORE INSERT ON space_operation BEGIN SELECT RAISE(ABORT,'injected audit failure'); END");
+    assert.throws(()=>db.saveLayout(changed),/injected audit failure/);
+    assert.deepEqual(state(),initial);
+    sql.exec('DROP TRIGGER fail_audit');
+    actorStore.run({id:'supos:test-admin',name:'测试管理员'},()=>db.saveLayout(changed));
+    assert.equal(db.getLayout().room.width,17);
+    assert.equal(db.listSpaceOperations().length,1);
+    const afterSave=state();
+    assert.throws(()=>db.saveLayout(changed),error=>error.status===409);
+    assert.deepEqual(state(),afterSave,'冲突不改节点、库存、事件或审计');
+    const audit=db.getSpaceOperation(db.listSpaceOperations()[0].id);
+    assert.equal(audit.actor_name,'测试管理员'); assert.equal(audit.action,'saveLayout');
+    assert.ok(audit.before.length>0 && audit.after.length>0);
+    const independentDraft=db.getLayout();
+    db.updateRack('WH-1-C',{name:'独立修改名称'});
+    assert.throws(()=>db.saveLayout(independentDraft),error=>error.status===409);
+    db.updateRack('WH-1-C',{name:independentDraft.furniture.find(f=>f.code==='WH-1-C').label});
+    const beforeDelete=state();
+    sql.exec("CREATE TRIGGER fail_audit_delete BEFORE INSERT ON space_operation BEGIN SELECT RAISE(ABORT,'injected delete failure'); END");
+    assert.throws(()=>db.deleteRack('WH-1-C'),/injected delete failure/);
+    assert.deepEqual(state(),beforeDelete);
+    sql.exec('DROP TRIGGER fail_audit_delete');
+    assert.ok(db.pageSpaceOperations({page:1}).rows.length>0);
+    assert.equal(db.pageSpaceOperations({action:'missing'}).total,0);
+    const beforeCells=state();
+    sql.exec("CREATE TRIGGER fail_cell_name BEFORE UPDATE OF name ON space_node WHEN OLD.loc_code='WH-1-C-L01-B01' BEGIN SELECT RAISE(ABORT,'injected name failure'); END");
+    assert.throws(()=>db.setRackCells('WH-1-C',{merges:{L01:[[1,2]]},names:{'L01-B01':'合并主格'}}),/injected name failure/);
+    assert.deepEqual(state(),beforeCells);
+    sql.exec('DROP TRIGGER fail_cell_name');
+    db.setRackCells('WH-1-C',{merges:{L01:[[1,2]]},names:{'L01-B01':'合并主格'}});
+    const merged=db.getScene().furniture.find(f=>f.code==='WH-1-C');
+    assert.deepEqual(merged.merges,{L01:[[1,2]]});
+    assert.equal(merged.cellNames['L01-B01'],'合并主格');
+    assert.equal(db.listSpaceOperations().length,beforeCells.audit.length+1);
+    assert.equal(db.listSpaceOperations()[0].action,'setRackCells');
+    const originalBefore=sql.prepare('SELECT geom FROM space_node WHERE loc_code=?').get(original.code);
+    const cloned=db.cloneRack(original.code,{source,positions:[{x:0,z:2}]});
+    assert.equal(cloned.created.length,1);
+    const copied=db.getScene().furniture.find(f=>f.code===cloned.created[0]);
+    assert.deepEqual(copied.merges,{L01:[[1,2]]});
+    assert.equal(copied.cellNames['L01-B01'],'副本格位');
+    assert.deepEqual(sql.prepare('SELECT geom FROM space_node WHERE loc_code=?').get(original.code),originalBefore);
+    const metaSnapshot=db.getScene().furniture[0].cellMeta;
+    const revisions=Object.fromEntries(['L01-B01','L01-B02'].map(suffix=>['WH-1-A-'+suffix,metaSnapshot[suffix].revision]));
+    db.setCellMeta('WH-1-A-L01-B02',{note:'另一位维护者'},revisions['WH-1-A-L01-B02']);
+    const beforeConflict=state();
+    assert.throws(()=>db.setCellsMeta(Object.keys(revisions),{note:'过期批量'},revisions),error=>error.status===409);
+    assert.deepEqual(state(),beforeConflict,'批量冲突不修改任何节点、库存、事件或审计');
+    sql.exec("CREATE TRIGGER fail_batch_meta BEFORE UPDATE OF note ON space_node WHEN OLD.loc_code='WH-1-A-L01-B02' BEGIN SELECT RAISE(ABORT,'injected batch failure'); END");
+    assert.throws(()=>db.setCellsMeta(['WH-1-A-L01-B01','WH-1-A-L01-B02'],{note:'不得部分写入'}),/injected batch failure/);
+    assert.deepEqual(state(),beforeConflict,'批量第二格写入失败时回滚第一格与审计');
+    sql.exec('DROP TRIGGER fail_batch_meta');
+    const aliasResult=db.setCellsMeta(['WH-1-C-L01-B02'],{note:'旧合并编码'});
+    assert.deepEqual(aliasResult.updated,['WH-1-C-L01-B01']);
+    assert.equal(sql.prepare("SELECT note FROM space_node WHERE loc_code='WH-1-C-L01-B01'").get().note,'旧合并编码');
+
+  } finally {
+    sql.close();
+    const rel=relative(root,realpathSync(dir)); assert.ok(rel && !rel.startsWith('..') && !isAbsolute(rel));
+    rmSync(dir,{recursive:true,force:true});
+  }
+});

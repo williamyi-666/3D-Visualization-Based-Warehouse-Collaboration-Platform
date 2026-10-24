@@ -1,0 +1,51 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+
+test('实盘复核HTTP：管理员审核、双端回执、退回重盘、分仓及业务流水关联',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'stocktake-review-http-')),child=spawn(process.execPath,['apps/api/server.mjs'],{env:{...process.env,PORT:'0',SPATIAL_DATA_DIR:dir,SPATIAL_UPLOAD_DIR:join(dir,'uploads'),SPATIAL_MODE:'standalone',SPATIAL_AUTH_PROVIDER:'local',SUPOS_MQTT_URL:'',OUTBOUND_BASE_URL:'',DB_DRIVER:'sqlite'}});let logs='';child.stderr.on('data',chunk=>logs+=chunk);
+  try{
+    const port=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('启动超时 '+logs)),15000);child.stdout.on('data',chunk=>{const found=String(chunk).match(/running at http:\/\/localhost:(\d+)/);if(found){clearTimeout(timer);resolve(found[1]);}});child.once('exit',code=>{clearTimeout(timer);reject(Error('启动失败 '+code+' '+logs));});});
+    const call=(path,token,method='GET',body)=>fetch('http://127.0.0.1:'+port+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    const json=async(...args)=>{const response=await call(...args),value=await response.json();assert.ok(response.ok,JSON.stringify(value));return value;};
+    const password='Count-20261019!';await json('/api/auth/bootstrap',null,'POST',{username:'admin',password,name:'复核管理员'});
+    const admin=(await json('/api/auth/login',null,'POST',{username:'admin',password})).token;
+    const user=await json('/api/users',admin,'POST',{username:'worker',password,role:'operator',name:'盘点员'});
+    const worker=(await json('/api/auth/login',null,'POST',{username:'worker',password})).token;
+    const phone=(await json('/api/auth/login',null,'POST',{username:'worker',password})).token;
+    const room=await json('/api/rooms',admin,'POST',{name:'差异复核验收',w:12,d:8,h:4}),rack=await json('/api/rack',admin,'POST',{roomCode:room.loc_code,rows:1,cols:2}),loc=rack.furn_code+'-L01-B01';
+    const item=await json('/api/counter/inbound',worker,'POST',{loc_code:loc,name:'复核物料',sku:'COUNT-HTTP',qty:20,unit:'套',document_no:'PO-101',recipient:'收货班组',department:'仓储部',purpose:'备品收货',request_id:'count-in'});
+    const quantity=async()=> (await json('/api/cells/'+loc+'/items',admin))[0].qty;
+    const count=async amount=>{let row=await json('/api/stocktakes',worker,'POST',{loc_code:loc});return json('/api/stocktakes/'+row.id,worker,'PUT',{revision:row.revision,counts:[{item_id:item.item_id,qty:amount}],reason:'现场逐件清点'});};
+    let row=await count(18),path='/api/stocktakes/'+row.id+'/finish';
+    row=await json(path,worker,'POST',{action:'confirm',revision:row.revision});assert.equal(row.state,'review');assert.equal(await quantity(),20);
+    assert.equal((await call(path,worker,'POST',{action:'approve',revision:row.revision})).status,403);
+    assert.equal((await call('/api/items/'+item.item_id,worker,'PUT',{qty:18})).status,400);
+    assert.equal((await call('/api/items/'+item.item_id,worker,'PUT',{loc_code:rack.furn_code+'-L01-B02'})).status,400);assert.equal(await quantity(),20);
+    const pending=await json('/api/work/status?room='+room.loc_code,admin);assert.ok(pending.tasks.rows.some(task=>task.id===row.id&&task.kind==='review'));
+    const approvals=await Promise.all([call(path,admin,'POST',{action:'approve',revision:row.revision,note:'复盘一致'}),call(path,admin,'POST',{action:'approve',revision:row.revision,note:'复盘一致'})]);assert.ok(approvals.every(response=>response.ok));
+    const receipts=await Promise.all(approvals.map(response=>response.json()));assert.equal(receipts.filter(value=>value.replayed).length,1);assert.equal(await quantity(),18);
+    assert.equal((await json('/api/stocktakes/'+row.id,phone)).state,'confirmed');
+    const history=await json('/api/cell/'+loc+'/history',worker),movement=history.find(entry=>entry.move_type==='stocktake');assert.equal(movement.business.stocktake_id,row.id);assert.equal(movement.business.counted_by,user.id);assert.equal(movement.business.reviewed_by,receipts[0].review.reviewed_by.id);
+    assert.equal(history.filter(entry=>entry.move_type==='stocktake').length,1);assert.equal(history.find(entry=>entry.move_type==='inbound').business.document_no,'PO-101');
+    const outgoing={loc_code:loc,item_id:item.item_id,qty:2,document_no:'REQ-101',recipient:'张师傅',department:'设备车间',purpose:'机床维修',request_id:'count-out'};
+    await json('/api/counter/outbound',worker,'POST',outgoing);assert.equal((await json('/api/counter/outbound',phone,'POST',outgoing)).replayed,true);assert.equal(await quantity(),16);
+    assert.equal((await call('/api/counter/outbound',worker,'POST',{...outgoing,recipient:'另一个领用人'})).status,400);assert.equal(await quantity(),16);
+    const issued=(await json('/api/cell/'+loc+'/history',worker)).filter(entry=>entry.move_type==='outbound');assert.equal(issued.length,1);assert.equal(issued[0].business.recipient,'张师傅');
+    const rule={room:room.loc_code,count_days:7,thresholds:[],stocktake_review:{mode:'threshold',qty_limit:3,percent_limit:null}};
+    assert.equal((await call('/api/work/policy',worker,'PUT',rule)).status,403);
+    await json('/api/work/policy',admin,'PUT',rule);
+    row=await count(15);assert.equal(row.review_requirement.required,false);row=await json('/api/stocktakes/'+row.id+'/finish',worker,'POST',{action:'confirm',revision:row.revision});assert.equal(row.state,'confirmed');assert.equal(await quantity(),15);
+    await json('/api/work/policy',admin,'PUT',{...rule,stocktake_review:{mode:'all'}});
+    row=await count(12);path='/api/stocktakes/'+row.id+'/finish';row=await json(path,worker,'POST',{action:'confirm',revision:row.revision});
+    await json('/api/counter/inbound',worker,'POST',{loc_code:loc,item_id:item.item_id,name:'复核物料',qty:1,unit:'套',request_id:'during-review'});
+    assert.equal((await call(path,admin,'POST',{action:'approve',revision:row.revision})).status,409);assert.equal(await quantity(),16);
+    row=await json(path,admin,'POST',{action:'return',revision:row.revision,note:'收货后请重新盘点'});assert.equal(row.state,'draft');assert.equal(row.baseline[0].qty,16);assert.deepEqual(row.counts,[]);
+    const audit=await json('/api/stocktakes/'+row.id+'/events',worker);assert.equal(audit.rows[0].action,'return');assert.ok(audit.rows.some(event=>event.action==='submit'&&event.details.counts[0].qty===12));
+    await json('/api/integration/warehouse-access',admin,'PUT',{user_id:user.id,sites:[]});assert.equal((await call('/api/stocktakes/'+row.id,worker)).status,403);assert.equal((await call('/api/stocktakes/'+row.id+'/events',worker)).status,403);assert.equal((await call('/api/work/policy?room='+room.loc_code,worker)).status,403);
+  }finally{child.kill('SIGTERM');await once(child,'exit');rmSync(dir,{recursive:true,force:true});}
+});

@@ -1,0 +1,39 @@
+# 复制到本机 .env.supos；部署时显式传 -SettingsFile，避免不同目录读取不同配置。
+SPATIAL_PROJECT_NAME=opensupos-spatial
+SPATIAL_CONTAINER_NAME=opensupos-spatial
+SPATIAL_IMAGE=opensupos-spatial-warehouse:latest
+SPATIAL_NETWORK=opensupos-lab-default_network
+SPATIAL_PUBLIC_ORIGIN=http://localhost:28088
+# 同一平台多实例使用不同子路径，并用相同BasePath注册网关。
+SPATIAL_BASE_PATH=/warehouse
+SUPOS_USERINFO_URL=http://backend:8080/inter-api/supos/auth/userinfo
+SPATIAL_HOST_ORIGINS=
+SPATIAL_INVENTORY_VOLUME=opensupos-spatial_inventory
+SPATIAL_ASSETS_VOLUME=opensupos-spatial_assets
+SPATIAL_EXTERNAL_VOLUMES=false
+# 恢复切换：将上述两个卷名改为已验收的恢复卷，并设置 EXTERNAL_VOLUMES=true。
+# 保留旧配置及旧卷；切回旧配置即可回退。已有卷不得用 down -v 删除。
+
+# 可选MQTT出站；启用后会派发pending事件，部署前核对来源与目标模型。
+# 仅指定Broker沿用库位主题；同时填写别名及路径时逐条核对UNS当前值。
+# 模型需预先创建：dataType=1，STRING字段event_id、event_type、payload及明确maxLen。
+SUPOS_MQTT_URL=
+SUPOS_MQTT_USER=
+SUPOS_MQTT_PASS=
+SUPOS_UNS_EVENT_ALIAS=
+SUPOS_UNS_EVENT_PATH=
+SUPOS_INTERNAL_API=http://backend:8080
+
+# 库存模式：integration由ERP/WMS提供库存；standalone为本应用独立记账。
+# 新独立实例必须使用新项目、容器和两个新卷，禁止直接切换已有集成库。
+SPATIAL_MODE=integration
+# 0仅启动派发；启用自动派发时建议5000毫秒及以上。
+OUTBOUND_INTERVAL_MS=0
+# 可选独立库存结构快照：需指定实际仓库编码和本实例专属UNS根目录。
+SUPOS_WAREHOUSE_SITE=
+SUPOS_WAREHOUSE_ALIAS=
+SUPOS_WAREHOUSE_NAME=
+SUPOS_WAREHOUSE_INTERVAL_MS=15000
+# 仅在确认目标归属后允许注册/更新本应用模型。
+SUPOS_WAREHOUSE_REGISTER=0
+SUPOS_WAREHOUSE_UPDATE=0

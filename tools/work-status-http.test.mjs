@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+
+test('真实待办按账号汇总，跨端处理后消失，角色撤销立即生效且检查不写库存',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'work-status-http-'));
+  const child=spawn(process.execPath,['apps/api/server.mjs'],{env:{...process.env,PORT:'0',DB_DRIVER:'sqlite',SPATIAL_MODE:'standalone',SPATIAL_AUTH_PROVIDER:'local',SPATIAL_DATA_DIR:dir,SPATIAL_UPLOAD_DIR:join(dir,'uploads'),SPATIAL_ASSISTANT_URL:'',SUPOS_MQTT_URL:'',OUTBOUND_BASE_URL:''}});
+  let errors='';child.stderr.on('data',chunk=>errors+=chunk);
+  try{
+    const port=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error(errors||'服务启动超时')),15000);child.stdout.on('data',chunk=>{const match=String(chunk).match(/running at http:\/\/localhost:(\d+)/);if(match){clearTimeout(timer);resolve(match[1]);}});child.once('exit',code=>{clearTimeout(timer);reject(Error('服务退出 '+code+' '+errors));});});
+    const request=async(path,token,method='GET',body)=>{const response=await fetch('http://127.0.0.1:'+port+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:response.status,data:await response.json()};};
+    const api=async(...args)=>{const result=await request(...args);assert.ok(result.status<300,JSON.stringify(result));return result.data;};
+    await api('/api/auth/bootstrap',null,'POST',{username:'admin',password:'Test-20261017!'});
+    const login=async username=>(await api('/api/auth/login',null,'POST',{username,password:'Test-20261017!'})).token,admin=await login('admin');
+    const workerUser=await api('/api/users',admin,'POST',{username:'worker',role:'operator',password:'Test-20261017!'});
+    await api('/api/users',admin,'POST',{username:'other',role:'operator',password:'Test-20261017!'});
+    const worker=await login('worker'),phone=await login('worker'),other=await login('other');
+    const room=(await api('/api/rooms',admin,'POST',{name:'协同待办验收',w:12,d:8,h:4})).loc_code;
+    const params={room,roomCode:room,template:'shelf',count:1,perRow:1,rows:1,cols:2,aisle:1.2,gap:0.3},preview=await api('/api/setup/preview?'+new URLSearchParams(params),admin);
+    const rack=await api('/api/setup/racks',admin,'POST',{...params,revision:preview.revision,request_id:'status-build'}),loc=rack.created[0]+'-L01-B01';
+    await api('/api/counter/inbound',worker,'POST',{loc_code:loc,name:'协同轴承',sku:'STATUS-6204',qty:10,unit:'套',request_id:'status-initial'});
+    const item=(await api('/api/cells/'+loc+'/items',worker))[0];
+    await api('/api/work/policy',admin,'PUT',{room,count_days:1,thresholds:[{item_id:item.item_id,minimum:12}]});
+    const status=token=>api('/api/work/status?room='+room,token);
+    const initial=await status(worker);assert.deepEqual(initial.counts,{count:1,draft:0,low:1,jobs:0});
+    const otherRoom=(await api('/api/rooms',admin,'POST',{name:'另一个库区',w:8,d:6,h:4})).loc_code;
+    await api('/api/assistant/jobs',worker,'POST',{room:otherRoom,operations:[{operation:'in'}]});assert.equal((await status(worker)).revision,initial.revision);
+    assert.equal((await status(phone)).revision,initial.revision);
+    const inventory=await api('/api/v1/inventory',worker);await status(worker);assert.deepEqual(await api('/api/v1/inventory',worker),inventory);
+    const body={room,title:'仅本人的待办',request_id:'status-job',operations:[{operation:'out',query:'STATUS-6204',qty:1,unit:'套',from_loc:loc}]};
+    const job=await api('/api/assistant/jobs',worker,'POST',body),saved=await status(phone);assert.equal(saved.counts.jobs,1);assert.equal(saved.jobs[0].id,job.id);assert.notEqual(saved.jobs_revision,initial.jobs_revision);
+    const otherStatus=await status(other);assert.equal(otherStatus.counts.jobs,0);assert.ok(!JSON.stringify(otherStatus).includes(job.id));
+    await api('/api/assistant/jobs/'+job.id+'/rows/'+job.rows[0].id+'/confirm',phone,'POST',{revision:job.revision,confirmed:true});
+    const finished=await status(worker);assert.equal(finished.counts.jobs,0);assert.notEqual(finished.jobs_revision,saved.jobs_revision);
+    let record=await api('/api/stocktakes',phone,'POST',{loc_code:loc});
+    const draft=await status(worker);assert.equal(draft.counts.draft,1);assert.equal(draft.counts.count,0);assert.ok(draft.tasks.rows.some(row=>row.id===record.id));assert.ok(!JSON.stringify(await status(other)).includes(record.id));
+    record=await api('/api/stocktakes/'+record.id,phone,'PUT',{revision:record.revision,counts:record.baseline.map(row=>({item_id:row.item_id,qty:row.qty}))});
+    await api('/api/stocktakes/'+record.id+'/finish',phone,'POST',{revision:record.revision,action:'confirm'});
+    const counted=await status(worker);assert.equal(counted.counts.count+counted.counts.draft,0);assert.equal(counted.counts.low,1);assert.notEqual(counted.tasks_revision,draft.tasks_revision);
+    await api('/api/counter/inbound',phone,'POST',{loc_code:loc,item_id:item.item_id,name:item.name,qty:3,unit:'套',request_id:'status-replenish'});
+    assert.equal((await status(worker)).total,0);
+    await api('/api/assistant/jobs',worker,'POST',{...body,request_id:'status-second'});assert.equal((await status(worker)).counts.jobs,1);
+    await api('/api/users/'+workerUser.id,admin,'PATCH',{role:'viewer'});assert.equal((await status(worker)).counts.jobs,0);assert.equal((await request('/api/assistant/jobs/'+job.id,worker)).status,403);
+    for(let i=0;i<51;i++)await api('/api/assistant/jobs',other,'POST',{room,request_id:'status-many-'+i,operations:[{operation:'in'}]});
+    const many=await status(other);assert.equal(many.counts.jobs,51);assert.equal(many.jobs.length,50);assert.equal(many.total,51);
+    assert.equal((await api('/api/assistant/jobs?room='+room,other)).length,51);
+    assert.equal((await request('/api/work/status?room='+room)).status,401);
+  }finally{if(child.exitCode===null){child.kill('SIGTERM');await once(child,'exit');}rmSync(dir,{recursive:true,force:true});}
+});

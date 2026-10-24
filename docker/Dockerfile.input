@@ -1,0 +1,15 @@
+# 在仓储应用镜像上加入离线输入识别；运行时不下载模型，也不新增公开端口。
+# docker build --build-arg SPATIAL_BASE_IMAGE=spatial-inventory:local -f docker/Dockerfile.input -t spatial-inventory:input .
+ARG SPATIAL_BASE_IMAGE=spatial-inventory:local
+FROM ${SPATIAL_BASE_IMAGE}
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv ffmpeg tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/warehouse-input \
+    && /opt/warehouse-input/bin/pip install --no-cache-dir vosk==0.3.45 Pillow==13.0.0 \
+    && curl --fail --location --retry 2 https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip -o /tmp/warehouse-speech.zip \
+    && python3 -c "import zipfile; zipfile.ZipFile('/tmp/warehouse-speech.zip').extractall('/opt/warehouse-models')" \
+    && rm /tmp/warehouse-speech.zip
+ENV SPATIAL_INPUT_PYTHON=/opt/warehouse-input/bin/python \
+    SPATIAL_INPUT_MODEL=/opt/warehouse-models/vosk-model-small-cn-0.22 \
+    SPATIAL_INPUT_ENABLED=1
+COPY packages/ai/media_worker.py /app/packages/ai/media_worker.py

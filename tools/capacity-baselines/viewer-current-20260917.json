@@ -1,0 +1,40 @@
+{
+  "source_commit": "2d4315d",
+  "image": "opensupos-spatial-warehouse:surface-batch-20260917",
+  "instance": "warehouse-current-audit",
+  "url": "http://localhost:39092/apps/web/audit/index.html",
+  "scope": "独立恢复卷，真实supOS浏览器会话；94项源码与当前交付清单一致；不提取Cookie/密码，不改变正式授权",
+  "identity": {
+    "user": "warehouse_viewer_test",
+    "role": "viewer"
+  },
+  "http_status": {
+    "/api/admin/backup/status": 403,
+    "/api/integration/credentials": 403,
+    "/api/integration/space-history": 403
+  },
+  "pagination": {
+    "fixture_rows": 137,
+    "pages": 3,
+    "first_count": 50,
+    "total_count": 137,
+    "duplicates": 0,
+    "query_clear": true,
+    "role_help": true
+  },
+  "note": "首次继承5万条压测样例的遍历由操作者中止，未计为通过；仅在新副本用现有seed脚本恢复137条样例后验收通过。",
+  "navigation": {
+    "passed": true,
+    "original": "WH-1",
+    "target": "WH-2",
+    "narrow_width": 390,
+    "close_visible": true,
+    "close_unobscured": true
+  },
+  "race": {
+    "passed": true,
+    "old_response_ignored": true,
+    "html_elements_created": false,
+    "method": "真实接口响应在隔离页fetch包装中延迟1500ms，非系统级网络限速"
+  }
+}

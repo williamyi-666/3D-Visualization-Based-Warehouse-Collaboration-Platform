@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>样板仓库 · 查询演示</title>
+<link rel="stylesheet" href="./query-demo.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script></head>
+<body>
+<header><span>双排货架样板 · 演示数据</span><span id="clock">00 / 30 秒</span></header>
+<main>
+  <div id="scene" aria-label="双排货架三维演示"></div>
+  <div class="search"><span>⌕</span><span id="keyword">名称 / SKU / 库位</span></div>
+  <div id="result" hidden>深沟球轴承 6204 · 24 套<br><small>WH-2-A-L02-B02　点击定位</small><span class="pointer">↖</span></div>
+  <aside id="detail" hidden><small>格位库存</small><h3>深沟球轴承 6204</h3><p>SKU　BRG-6204</p><p>数量　<strong>24 套</strong></p><p>库位　WH-2-A-L02-B02</p><small>实际使用时，点击格位也可查看详情。</small></aside>
+  <div id="error" role="status" hidden>当前设备无法播放三维动画。查询方法：输入名称或 SKU → 点击结果定位 → 在右侧查看数量和库位。</div>
+</main>
+<footer><div id="caption" role="status">准备样板场景…</div><progress id="progress" max="30" value="0" aria-label="演示进度"></progress>
+<nav><button id="play">暂停</button><button id="replay">重播</button><span>字幕演示 · 无需操作</span></nav></footer>
+<script type="module">
+import('./query-demo.mjs').catch(()=>{document.getElementById('error').hidden=false;document.getElementById('caption').textContent='查询货品：搜索 → 定位 → 查看库存';document.getElementById('play').disabled=true;});
+</script></body></html>

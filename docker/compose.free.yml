@@ -1,0 +1,25 @@
+name: supos-free-warehouse
+services:
+  warehouse:
+    image: opensupos-spatial-warehouse:sidebar-actions-20260918
+    container_name: supos-free-warehouse
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:38090:3000"
+    environment:
+      PORT: 3000
+      SPATIAL_AUTH_PROVIDER: local
+      SPATIAL_MODE: standalone
+      SPATIAL_DATA_DIR: /data
+      SPATIAL_UPLOAD_DIR: /uploads
+    volumes:
+      - inventory:/data
+      - assets:/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+volumes:
+  inventory:
+  assets:

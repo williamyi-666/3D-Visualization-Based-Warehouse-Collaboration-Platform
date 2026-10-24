@@ -1,0 +1,219 @@
+{
+  "image": "opensupos-spatial-warehouse:adjust-20260916.4",
+  "source_commit": "d51e8d7",
+  "url": "http://localhost:39090/apps/web/audit/index.html",
+  "environment": "Windows i7-7700 8逻辑CPU 32GiB，Docker Desktop独立恢复卷，内置Chromium浏览器",
+  "scope": "iframe导航开始到仓储概览出现，12次连续加载；102个总格位、默认库区90格位；另保留原5条模拟库存。非冷缓存保证，不含GPU精确测量",
+  "real_session_permissions": {
+    "username": "warehouse_viewer_test",
+    "role": "viewer",
+    "http_status": {
+      "/api/admin/backup/status": 403,
+      "/api/integration/credentials": 403,
+      "/api/integration/space-history": 403
+    }
+  },
+  "pagination": {
+    "fixture_rows": 137,
+    "pages": 3,
+    "collected": 137,
+    "first_page": 50,
+    "duplicates": 0,
+    "clear_query": true,
+    "viewer_help": true
+  },
+  "loads": [
+    {
+      "fixture_rows": 1000,
+      "elapsed_ms": [
+        942,
+        812,
+        916,
+        959,
+        925,
+        790,
+        765,
+        850,
+        839,
+        1065,
+        782,
+        930
+      ],
+      "p95_ms": 1065,
+      "heap_bytes": [
+        38623580,
+        68264937,
+        93684681,
+        38376302,
+        69357539,
+        68469531,
+        94336346,
+        100904591,
+        121867022,
+        141126697,
+        167129608,
+        195551431
+      ]
+    },
+    {
+      "fixture_rows": 10000,
+      "elapsed_ms": [
+        3131,
+        2938,
+        2735,
+        2882,
+        2931,
+        2871,
+        3058,
+        2793,
+        2811,
+        2917,
+        3231,
+        2923
+      ],
+      "p95_ms": 3231,
+      "heap_bytes": [
+        186848896,
+        335120516,
+        481265421,
+        452751087,
+        601099419,
+        746679080,
+        900025681,
+        1054127966,
+        1203368803,
+        1341037396,
+        740986621,
+        888736461
+      ]
+    },
+    {
+      "fixture_rows": 50000,
+      "elapsed_ms": [
+        15678,
+        15367,
+        16669,
+        15654,
+        17209,
+        16376,
+        18188,
+        18236,
+        21977,
+        14541,
+        13439,
+        16023
+      ],
+      "p95_ms": 21977,
+      "heap_bytes": [
+        2399988173,
+        725082000,
+        1418743900,
+        2116134384,
+        2087836021,
+        2798876848,
+        3462773065,
+        4149692561,
+        3462538613,
+        2775833209,
+        3485030672,
+        2776972144
+      ]
+    }
+  ],
+  "user_agent": "Chrome/152.0.0.0 Windows NT 10.0 Win64 x64",
+  "viewport": {
+    "width": 1025,
+    "height": 720
+  },
+  "optimized_image": "opensupos-spatial-warehouse:audit-render-20260916",
+  "optimized_load": {
+    "fixture_rows": 50000,
+    "elapsed_ms": [
+      2081,
+      2164,
+      3222,
+      1875,
+      1949,
+      2261,
+      1871,
+      1825,
+      1871,
+      1893,
+      1888,
+      2333
+    ],
+    "p95_ms": 3222,
+    "heap_bytes": [
+      2904893599,
+      2947583915,
+      2276883561,
+      2324987557,
+      2369968506,
+      2415050719,
+      2460175256,
+      2505175357,
+      2550511910,
+      2595402119,
+      2640449068,
+      61499030
+    ],
+    "memory_note": "同浏览器延续前轮运行，旧页面垃圾回收影响读数；不使用前后heap绝对值推断内存改善"
+  },
+  "optimized_refresh": {
+    "fixture_rows": 50000,
+    "elapsed_ms": [
+      1806,
+      1413,
+      1470,
+      1416,
+      1419,
+      1495,
+      1354,
+      1492,
+      1389,
+      1344,
+      1434,
+      1496
+    ],
+    "p95_ms": 1806,
+    "heap_bytes": [
+      95401354,
+      95712330,
+      95250173,
+      97056434,
+      96173289,
+      95679870,
+      95568993,
+      95813154,
+      95611091,
+      86933234,
+      95737235,
+      95714552
+    ]
+  },
+  "boundary_checks": {
+    "cross_room": [
+      "WH-1",
+      "WH-2",
+      "WH-1"
+    ],
+    "narrow_width": 390,
+    "help_close_visible_and_unobscured": true,
+    "linux_isolated_url": "http://127.0.0.1:39091",
+    "backup_failure": "备份不接受符号链接",
+    "failure_persisted_after_restart": true,
+    "recovered_at": "2026-09-16 21:51:55 Asia/Shanghai",
+    "admin_help": true,
+    "discard_dirty_layout": true,
+    "save_layout_audit_at": "2026-09-16 21:54:22 Asia/Shanghai"
+  },
+  "admin_automated_regression": {
+    "passed": true,
+    "cancel_keeps_draft": true,
+    "discard_keeps_published_layout": true,
+    "save_audit": 6,
+    "failed_source_visible": true,
+    "stale_source_visible": true,
+    "period_restored": true
+  }
+}

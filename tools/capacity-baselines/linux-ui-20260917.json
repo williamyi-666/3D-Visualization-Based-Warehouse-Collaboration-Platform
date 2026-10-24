@@ -1,0 +1,37 @@
+{
+  "image": "opensupos-spatial-warehouse:surface-batch-20260917",
+  "source_commit": "2d4315d",
+  "url": "http://127.0.0.1:38088/Warehouse3D",
+  "identity": "supos / 管理员，真实平台会话",
+  "navigation": {
+    "from": "WH-1",
+    "search": "FLOOR-B",
+    "located": "WH-2-F1-L04-B03",
+    "quantity": 2,
+    "unit": "托",
+    "status": "待检",
+    "highlight_visually_checked": true
+  },
+  "layout": {
+    "invalid_height_rejected": 0,
+    "draft_height": 2.5,
+    "undo_height": 2,
+    "redo_height": 2.5,
+    "discard_confirmed": true,
+    "saved": false
+  },
+  "cells": {
+    "query": "WH-1-B-L01",
+    "matched": 6,
+    "total": 90,
+    "next": "WH-1-B-L01-B02",
+    "saved": false
+  },
+  "operations": {
+    "source_failed_visible": true,
+    "history_records": 4,
+    "backup_last_success": "2026/9/17 13:28:20",
+    "backup_result": "成功"
+  },
+  "finding": "手动从WH-2切回WH-1后，searchMsg仍保留旧格位已定位提示；场景/面包屑/库存已切回，应清理旧反馈。"
+}

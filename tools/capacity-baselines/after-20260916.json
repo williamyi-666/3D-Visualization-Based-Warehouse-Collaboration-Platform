@@ -1,0 +1,116 @@
+{
+  "measured_at": "2026-09-16T13:19:30.088Z",
+  "node": "v24.14.0",
+  "platform": "win32",
+  "arch": "x64",
+  "cpu": "Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz",
+  "logical_cpus": 8,
+  "total_memory_bytes": 34296729600,
+  "scope": "服务端内存SQLite及序列化结果；不包含HTTP、真实磁盘、浏览器渲染或浏览器内存",
+  "cases": [
+    {
+      "inventory_rows": 1000,
+      "cells": 100,
+      "search": {
+        "p95_ms": 6.25,
+        "response_bytes": 351251,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 4.24,
+        "response_bytes": 398286,
+        "samples": 12
+      },
+      "heap_before_bytes": 5067896,
+      "heap_after_bytes": 13924440,
+      "rss_bytes": 61710336
+    },
+    {
+      "inventory_rows": 1000,
+      "cells": 1000,
+      "search": {
+        "p95_ms": 6.69,
+        "response_bytes": 353231,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 10.1,
+        "response_bytes": 408366,
+        "samples": 12
+      },
+      "heap_before_bytes": 5123504,
+      "heap_after_bytes": 13370328,
+      "rss_bytes": 63623168
+    },
+    {
+      "inventory_rows": 10000,
+      "cells": 100,
+      "search": {
+        "p95_ms": 39.78,
+        "response_bytes": 3562451,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 43.67,
+        "response_bytes": 4023486,
+        "samples": 12
+      },
+      "heap_before_bytes": 6942816,
+      "heap_after_bytes": 110592360,
+      "rss_bytes": 234651648
+    },
+    {
+      "inventory_rows": 10000,
+      "cells": 1000,
+      "search": {
+        "p95_ms": 40.47,
+        "response_bytes": 3582251,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 44,
+        "response_bytes": 4051386,
+        "samples": 12
+      },
+      "heap_before_bytes": 6973768,
+      "heap_after_bytes": 90690912,
+      "rss_bytes": 237490176
+    },
+    {
+      "inventory_rows": 50000,
+      "cells": 100,
+      "search": {
+        "p95_ms": 254.82,
+        "response_bytes": 18034451,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 326.6,
+        "response_bytes": 20335486,
+        "samples": 12
+      },
+      "heap_before_bytes": 15623776,
+      "heap_after_bytes": 170509488,
+      "rss_bytes": 599199744
+    },
+    {
+      "inventory_rows": 50000,
+      "cells": 1000,
+      "search": {
+        "p95_ms": 261.94,
+        "response_bytes": 18133451,
+        "samples": 12
+      },
+      "scene": {
+        "p95_ms": 365.44,
+        "response_bytes": 20442586,
+        "samples": 12
+      },
+      "heap_before_bytes": 15585128,
+      "heap_after_bytes": 526055968,
+      "rss_bytes": 720629760
+    }
+  ],
+  "timing_scope": "list解析+筛选或场景组装；不含JSON.stringify耗时，response_bytes单独计算",
+  "baseline_code": "本次按库位分组优化；未部署"
+}

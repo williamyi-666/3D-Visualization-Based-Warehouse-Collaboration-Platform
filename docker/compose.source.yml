@@ -1,0 +1,32 @@
+name: ${SPATIAL_PROJECT_NAME:-spatial-oa2026}
+services:
+  warehouse:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.supos
+    image: spatial-inventory:${SPATIAL_VERSION:-oa2026}
+    restart: unless-stopped
+    ports:
+      - "${SPATIAL_BIND_ADDRESS:-127.0.0.1}:${SPATIAL_PORT:-38140}:3000"
+    environment:
+      PORT: 3000
+      DB_DRIVER: sqlite
+      SPATIAL_AUTH_PROVIDER: local
+      SPATIAL_MODE: standalone
+      SPATIAL_DATA_DIR: /data
+      SPATIAL_UPLOAD_DIR: /uploads
+      SPATIAL_ASSISTANT_URL: ${SPATIAL_ASSISTANT_URL:-}
+      SPATIAL_ASSISTANT_MODEL: ${SPATIAL_ASSISTANT_MODEL:-qwen3:4b-instruct-2507-q4_K_M}
+    volumes:
+      - inventory:/data
+      - assets:/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  inventory:
+    name: ${SPATIAL_INVENTORY_VOLUME:-spatial-oa2026_inventory}
+  assets:
+    name: ${SPATIAL_ASSETS_VOLUME:-spatial-oa2026_assets}

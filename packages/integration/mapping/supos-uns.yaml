@@ -1,0 +1,63 @@
+# Open supOS UNS 出站映射（B-轻量版 POC）
+# 事件类型与 apps/api/db.mjs 的 emit() 对齐：
+#   item.created / item.updated / item.deleted
+#   inventory.changed / rack.created / rack.updated / rack.deleted
+#   room.created / room.deleted / layout.saved
+#
+# 兼容说明：仓储化改名（家具→货架）后新事件为 rack.*；这里同时保留 furniture.* 映射，
+# 兼容旧事件名称；只有可解析可靠库位的事件才能派发，缺失库位仍保持pending。
+#
+# 规则：
+#   topic.<事件>  = UNS topic 模板，支持占位符 {tenant} {uns} {attr}
+#                   {uns} 由 payload 里的 LOC（loc_code/rack_code/furn_code/room_code；node_id须先经数据库解析）自动转 UNS 路径
+#   字段映射       远端字段: 本地字段（applyMapping 把本地事件字段重命名为远端字段）
+system: supos-uns
+description: Open supOS UNS 统一命名空间 MQTT 发布映射
+broker_url: ${SUPOS_MQTT_URL}
+username: ${SUPOS_MQTT_USER}
+password: ${SUPOS_MQTT_PASS}
+tenant: ${SUPOS_TENANT:myfactory}
+qos: 1
+
+# ---- UNS topic 模板 ----
+topic.item.created: {tenant}/wh/{uns}/item
+topic.item.updated: {tenant}/wh/{uns}/item
+topic.item.deleted: {tenant}/wh/{uns}/item
+topic.inventory.changed: {tenant}/wh/{uns}/quantity
+topic.rack.created: {tenant}/wh/{uns}
+topic.rack.updated: {tenant}/wh/{uns}
+topic.rack.deleted: {tenant}/wh/{uns}
+# 旧事件类型（历史 outbox 兼容，勿删）
+topic.furniture.created: {tenant}/wh/{uns}
+topic.furniture.updated: {tenant}/wh/{uns}
+topic.furniture.deleted: {tenant}/wh/{uns}
+topic.room.created: {tenant}/wh/{uns}
+topic.room.deleted: {tenant}/wh/{uns}
+
+# ---- 字段映射（远端字段: 本地字段；applyMapping 读 payload[本地] 写 out[远端]）----
+item.created.name: name
+item.created.qty: qty
+item.created.loc: loc_code
+inventory.changed.quantity: qty
+inventory.changed.item_id: item_id
+rack.created.code: rack_code
+rack.created.name: name
+# 旧事件类型（历史 outbox 兼容，勿删）
+furniture.created.code: furn_code
+furniture.created.name: name
+room.created.code: room_code
+item.updated.item_id: item_id
+item.deleted.item_id: item_id
+rack.updated.code: rack_code
+rack.deleted.code: rack_code
+room.deleted.code: room_code
+furniture.updated.code: furn_code
+furniture.deleted.code: furn_code
+
+# 仓库与布局变更事件；仅表示MQTT出站，不自动创建UNS文件模型。
+topic.site.created: {tenant}/wh/{uns}/site
+topic.layout.saved: {tenant}/wh/{uns}/layout
+site.created.code: site_code
+site.created.name: name
+layout.saved.code: room_code
+layout.saved.rack_count: furn_count
